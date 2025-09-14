@@ -1,0 +1,5 @@
+# postgresql data directory
+data/pgdata/
+
+# .env file
+.env

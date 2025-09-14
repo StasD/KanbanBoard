@@ -1,0 +1,40 @@
+services:
+
+  db:
+    image: postgres:17.6-bookworm
+    ports:
+      - 5032:5432
+    restart: no
+    volumes:
+      - ./postgresql/data:/var/lib/postgresql/data
+      - ./postgresql/ssl:/etc/postgresql/ssl:ro
+      - ./postgresql/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgresql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+    command: postgres
+      -c ssl=on
+      -c ssl_cert_file=/etc/postgresql/ssl/server.crt
+      -c ssl_key_file=/etc/postgresql/ssl/server.key
+      -c hba_file=/etc/postgresql/pg_hba.conf
+      -c max_connections=200
+    env_file:
+      - ./postgresql/.env
+    mem_limit: 2048m
+    shm_size: 128mb
+
+  api:
+    image: mcr.microsoft.com/dotnet/aspnet:9.0.9-bookworm-slim
+    ports:
+      - 7003:7003
+    restart: no
+    working_dir: /app
+    entrypoint: ["dotnet", "KanbanBoardApi.dll"]
+    volumes:
+      - ./KanbanBoardApi/publish:/app:ro
+      - ./KanbanBoardApi/ssl:/ssl:ro
+    env_file:
+      - ./KanbanBoardApi/.env
+    mem_limit: 1024m
+    shm_size: 128mb
+    depends_on:
+      - db
+
