@@ -1,5 +1,12 @@
 services:
 
+  smtp:
+    image: rnwood/smtp4dev:3.10.2
+    ports:
+      - 8280:80
+      - 8225:25
+    restart: no
+
   db:
     image: postgres:17.6-bookworm
     ports:
