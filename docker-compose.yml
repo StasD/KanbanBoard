@@ -1,20 +1,9 @@
 services:
 
-  smtp:
-    image: rnwood/smtp4dev:3.10.2
-    ports:
-      - 8280:80
-      - 8225:25
-    restart: no
-    networks:
-      default:
-        aliases:
-          - smtp.kanbanboard.net
-
   db:
     image: postgres:17.6-bookworm
     ports:
-      - 5032:5432
+      - 127.0.0.1:5032:5432
     restart: no
     volumes:
       - ./data/pg/data:/var/lib/postgresql/data
@@ -44,7 +33,7 @@ services:
   api:
     image: mcr.microsoft.com/dotnet/aspnet:9.0.9-bookworm-slim
     ports:
-      - 7003:7003
+      - 127.0.0.1:7003:7003
     restart: no
     working_dir: /app
     entrypoint: ["dotnet", "KanbanBoardApi.dll"]
@@ -82,3 +71,24 @@ services:
     depends_on:
       api:
         condition: service_started
+
+  mail:
+    image: rnwood/smtp4dev:3.10.3
+    ports:
+      - 127.0.0.1:8180:80
+      - 127.0.0.1:8125:25
+      - 127.0.0.1:8143:143
+    restart: no
+    volumes:
+      - ./data/mail/data:/smtp4dev
+      - ./data/mail/DataProtectionKeys:/root/.aspnet/DataProtection-Keys
+      - ./data/ssl:/ssl:ro
+    environment:
+      - ServerOptions__TlsMode=ImplicitTls
+      - ServerOptions__TlsCertificate=/ssl/server.crt
+      - ServerOptions__TlsCertificatePrivateKey=/ssl/server.key
+      - ServerOptions__SecureConnectionRequired=true
+    networks:
+      default:
+        aliases:
+          - mail.kanbanboard.net

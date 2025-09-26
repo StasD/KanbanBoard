@@ -1,3 +1,5 @@
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using KanbanBoardApi.Models.Common;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -23,8 +25,11 @@ public class EmailSender(IOptions<EmailSenderOptions> options) : IEmailSender
             Text = htmlMessage
         };
 
+        static bool certificateValidationCallback(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors) => true;
+
         using var client = new SmtpClient();
-        await client.ConnectAsync(_options.Host, _options.Port, SecureSocketOptions.None); // No SSL needed for local smtp4dev
+        client.ServerCertificateValidationCallback = certificateValidationCallback;
+        await client.ConnectAsync(_options.Host, _options.Port, SecureSocketOptions.SslOnConnect);
         await client.SendAsync(message);
         await client.DisconnectAsync(true);
     }
