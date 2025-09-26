@@ -3,6 +3,9 @@ using KanbanBoardApi.Data;
 using KanbanBoardApi.Models.Common;
 using KanbanBoardApi.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+
+// using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -19,6 +22,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         .EnableSensitiveDataLogging()
 #endif
 );
+
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<ApplicationDbContext>();
+
+// builder.Services.AddAuthentication(options =>
+// {
+//     options.DefaultAuthenticateScheme = IdentityConstants.BearerScheme;
+//     options.DefaultChallengeScheme = IdentityConstants.BearerScheme;
+// })
+// .AddBearerToken();
 
 builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
     {
@@ -56,9 +69,10 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// Configure CORS policies
+#if DEBUG
 builder.Services.Configure<CorsSettings>(builder.Configuration.GetSection("CorsSettings"));
 
-// Configure CORS policies
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policyBuilder =>
@@ -72,24 +86,31 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+#endif
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+// if (app.Environment.IsDevelopment())
+// {
     app.MapOpenApi().AllowAnonymous();
-    app.MapScalarApiReference().AllowAnonymous();
-}
+    app.MapScalarApiReference(options =>
+    {
+        options.Servers = [];
+    }).AllowAnonymous();
+// }
 
 // app.UseHttpsRedirection();
 
-app.UseCors();
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGroup("/account")
+app.MapGroup("/api/account")
     .AllowAnonymous()
     .MapIdentityApi<ApplicationUser>(); // click 'Go to Definition' to view the code for the endpoints it creates
 
