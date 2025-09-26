@@ -6,6 +6,10 @@ services:
       - 8280:80
       - 8225:25
     restart: no
+    networks:
+      default:
+        aliases:
+          - smtp.kanbanboard.net
 
   db:
     image: postgres:17.6-bookworm
@@ -25,8 +29,17 @@ services:
       -c max_connections=200
     env_file:
       - ./data/pg/.env
+    networks:
+      default:
+        aliases:
+          - db.kanbanboard.net
     mem_limit: 2048m
     shm_size: 128mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U robot -d kanban_board"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   api:
     image: mcr.microsoft.com/dotnet/aspnet:9.0.9-bookworm-slim
@@ -37,14 +50,18 @@ services:
     entrypoint: ["dotnet", "KanbanBoardApi.dll"]
     volumes:
       - ./KanbanBoardApi/publish:/app:ro
-      - ./data/aspnet/DataProtectionKeys:/root/.aspnet/DataProtection-Keys
       - ./data/ssl:/ssl:ro
     env_file:
       - ./KanbanBoardApi/.env
+    networks:
+      default:
+        aliases:
+          - api.kanbanboard.net
     mem_limit: 1024m
     shm_size: 128mb
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   app:
     image: nginx:1.29.1-bookworm
@@ -57,5 +74,11 @@ services:
       - ./data/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./data/nginx/logs:/var/log/nginx/logs
       - ./data/ssl:/etc/nginx/ssl:ro
+    networks:
+      default:
+        aliases:
+          - kanbanboard.net
+          - www.kanbanboard.net
     depends_on:
-      - api
+      api:
+        condition: service_started

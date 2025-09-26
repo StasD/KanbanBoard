@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Encodings.Web;
 using KanbanBoardApi.Data;
 using KanbanBoardApi.Models.Common;
@@ -23,8 +24,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 #endif
 );
 
+var certPaths = builder.Configuration.GetSection("Kestrel:Endpoints:Https:Certificate").Get<CertificatePaths>()!;
+var certificate = X509Certificate2.CreateFromPemFile(certPaths.Path, certPaths.KeyPath);
+
 builder.Services.AddDataProtection()
-    .PersistKeysToDbContext<ApplicationDbContext>();
+    .PersistKeysToDbContext<ApplicationDbContext>()
+    .ProtectKeysWithCertificate(certificate);
 
 // builder.Services.AddAuthentication(options =>
 // {
