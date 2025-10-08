@@ -37,6 +37,9 @@ public class KanbanTasksService(ApplicationDbContext db)
     public Task<KanbanTaskModel?> GetKanbanTaskById(int id) =>
         GetKanbanTaskByIdQuery(id).Select(KanbanTaskMapping).FirstOrDefaultAsync();
 
+    public IQueryable<KanbanTask> GetKanbanTasksByStatusQuery(KanbanTaskStatus status) =>
+        GetAllKanbanTasksQuery().Where(kt => kt.Status == status);
+
     public IQueryable<KanbanTask> GetKanbanTasksByAssignedUserIdQuery(int assignedUserId) =>
         GetAllKanbanTasksQuery().Where(kt => kt.AssignedUserId == assignedUserId);
 

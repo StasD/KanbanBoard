@@ -75,7 +75,6 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =
 builder.Services.AddOpenApi();
 
 // Configure CORS policies
-#if DEBUG
 builder.Services.Configure<CorsSettings>(builder.Configuration.GetSection("CorsSettings"));
 
 builder.Services.AddCors(options =>
@@ -86,12 +85,11 @@ builder.Services.AddCors(options =>
 
         policyBuilder
             .WithOrigins(corsSettings.AllowedOrigins.Split(","))
+            .WithHeaders(corsSettings.ClientHeaders.Split(","))
             .WithExposedHeaders(corsSettings.ExposedHeaders.Split(","))
-            .AllowCredentials()
             .AllowAnyMethod();
     });
 });
-#endif
 
 var app = builder.Build();
 
@@ -107,10 +105,7 @@ var app = builder.Build();
 
 // app.UseHttpsRedirection();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseCors();
-}
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
