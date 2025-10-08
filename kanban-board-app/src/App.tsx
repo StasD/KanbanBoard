@@ -1,17 +1,17 @@
 import { Routes, Route, useNavigate, useHref } from 'react-router';
 import { HeroUIProvider, ToastProvider } from '@heroui/react';
 import MainLayout from '@/MainLayout';
-import HomePage from '@/home/HomePage';
-import BoardPage from '@/board/BoardPage';
-import TasksPage from '@/tasks/TasksPage';
-import ViteDemo from '@/vitedemo/ViteDemo';
+import HomePage from '@/pages/home/HomePage';
+import BoardPage from '@/pages/board/BoardPage';
+import TasksPage from '@/pages/tasks/TasksPage';
+import ViteDemo from '@/pages/vitedemo/ViteDemo';
 
 function App() {
   const navigate = useNavigate();
 
   return (
     <HeroUIProvider navigate={navigate} useHref={useHref}>
-      <ToastProvider />
+      <ToastProvider placement="top-center" />
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage breadcrumbPath={'/'} />} />

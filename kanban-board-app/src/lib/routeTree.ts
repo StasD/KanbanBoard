@@ -1,4 +1,14 @@
-const routeTree = {
+interface TreeNodeBase {
+  name: string;
+  path: string;
+}
+
+interface TreeNode extends TreeNodeBase {
+  navbarPos?: number;
+  children?: { [key: string]: TreeNode };
+}
+
+const routeTree: TreeNode = {
   name: 'Home',
   path: '/',
   children: {
@@ -38,21 +48,24 @@ const routeTree = {
   },
 };
 
-const getNamePath = (node) => ({ name: node.name, path: node.path });
+const getNamePath = (node: TreeNode) => ({ name: node.name, path: node.path }) as TreeNodeBase;
 
-const getPathInfo = (path) =>
+type AccType = [TreeNode | undefined, TreeNodeBase[]];
+
+const getPathInfo = (path: string) =>
   path
     .split('/')
     .filter((s) => s)
     .reduce(
-      (acc, val) => ((node, arr) => [node, node ? [...arr, getNamePath(node)] : []])(acc[0].children[val], acc[1]),
-      [routeTree, [getNamePath(routeTree)]],
+      (acc, val) =>
+        ((node, arr) => [node, node ? [...arr, getNamePath(node)] : []] as AccType)(acc[0]?.children?.[val], acc[1]),
+      [routeTree, [getNamePath(routeTree)]] as AccType,
     )[1];
 
 const getNavbarItems = () =>
-  Object.values(routeTree.children)
-    .filter((o) => o.navbarPos > 0)
-    .sort((o1, o2) => o1.navbarPos - o2.navbarPos)
+  Object.values(routeTree?.children ?? {})
+    .filter((o) => o.navbarPos !== undefined && o.navbarPos > 0)
+    .sort((o1, o2) => (o1.navbarPos as number) - (o2.navbarPos as number))
     .map((o) => getNamePath(o));
 
 export { routeTree, getNamePath, getPathInfo, getNavbarItems };

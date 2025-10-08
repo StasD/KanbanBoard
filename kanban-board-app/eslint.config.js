@@ -15,12 +15,10 @@ const eslintConfig = defineConfig([
   globalIgnores(['dist']),
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    extends: [
-      js.configs.recommended,
-      tseslint.configs.strict,
-      reactHooks.configs['recommended-latest'],
-      reactRefresh.configs.vite,
-    ],
+    plugins: {
+      'react-hooks': reactHooks,
+    },
+    extends: [js.configs.recommended, tseslint.configs.strict, 'react-hooks/recommended', reactRefresh.configs.vite],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
@@ -30,7 +28,11 @@ const eslintConfig = defineConfig([
       // },
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': ['warn', { ignoreRestSiblings: true, varsIgnorePattern: '^_' }],
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { ignoreRestSiblings: true, argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
   },
   {
@@ -71,7 +73,6 @@ const eslintConfig = defineConfig([
           ignoreFunctionTypeParameterNameValueShadow: false,
         },
       ],
-      'no-unused-vars': ['warn', { ignoreRestSiblings: true, varsIgnorePattern: '^_' }],
       'prettier/prettier': ['warn', { usePrettierrc: true }],
     },
   },

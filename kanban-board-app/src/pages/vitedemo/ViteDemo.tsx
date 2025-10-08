@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useOutletContext } from 'react-router';
+import { useState } from 'react';
 import { useTheme } from '@heroui/use-theme';
 import { Button, Select, SelectItem } from '@heroui/react';
+import useBreadcrumbPath from '@/hooks/useBreadcrumbPath';
 import reactLogo from '@/assets/react.svg';
 import viteLogo from '/vite.svg';
 import styles from './ViteDemo.module.css';
@@ -12,16 +12,12 @@ const themes = [
   { id: 'purple-dark', name: 'Purple Dark' },
 ];
 
-function ViteDemo({ breadcrumbPath }) {
+function ViteDemo({ breadcrumbPath = '' }) {
+  useBreadcrumbPath(breadcrumbPath);
   const { theme, setTheme } = useTheme();
   const [count, setCount] = useState(0);
-  const setBreadcrumbPath = useOutletContext();
 
-  useEffect(() => {
-    setBreadcrumbPath(breadcrumbPath);
-  }, [setBreadcrumbPath, breadcrumbPath]);
-
-  function setNewTheme(newTheme) {
+  function setNewTheme(newTheme: string) {
     document.documentElement.classList.remove(theme);
     setTheme(newTheme);
   }
@@ -53,7 +49,7 @@ function ViteDemo({ breadcrumbPath }) {
             label="Theme"
             disallowEmptySelection
             selectedKeys={new Set([theme])}
-            onSelectionChange={(v) => setNewTheme(v.currentKey)}
+            onSelectionChange={(v) => setNewTheme(v.currentKey as string)}
           >
             {themes.map((_theme) => (
               <SelectItem key={_theme.id}>{_theme.name}</SelectItem>
