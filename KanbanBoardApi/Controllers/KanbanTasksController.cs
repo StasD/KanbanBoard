@@ -17,6 +17,11 @@ namespace KanbanBoardApi.Controllers;
 [Route("api/[controller]")]
 public class KanbanTasksController(UserManager<ApplicationUser> userManager, ApplicationDbContext db, KanbanTasksService kanbanTasksService) : ControllerBase
 {
+    private static double GetNewPriority(IdPriority? taskAfter, IdPriority? taskBefore) =>
+        taskBefore == null
+            ? (taskAfter?.Priority ?? 0) + 10
+            : taskBefore.Priority - (taskBefore.Priority - (taskAfter?.Priority ?? 0)) * 0.1;
+
     [HttpGet]
     [ProducesResponseType<IEnumerable<KanbanTaskModel>>(StatusCodes.Status200OK, "application/json")]
     public async Task<Ok<IEnumerable<KanbanTaskModel>>> GetKanbanTasks() =>
@@ -44,11 +49,13 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
         var loggedInUserId = (await userManager.GetUserAsync(User))?.Id;
         var now = DateTime.UtcNow;
 
+        var newStatus = (KanbanTaskStatus)kanbanTaskModel.Status!;
+
         var newKanbanTask = new KanbanTask
         {
             Title = kanbanTaskModel.Title!,
             Description = kanbanTaskModel.Description!,
-            Status = (KanbanTaskStatus)kanbanTaskModel.Status!,
+            Status = newStatus,
             AssignedUserId = kanbanTaskModel.AssignedUserId,
             AssignedAt = kanbanTaskModel.AssignedUserId == null ? null : now,
             CreatedByUserId = loggedInUserId,
@@ -61,8 +68,16 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
 
         try
         {
-            var maxPriority = await kanbanTasksService.GetMaxPriority() ?? 0.0d;
-            newKanbanTask.Priority = maxPriority + 1.0d;
+            // get first task with new task's status
+            var newStatusTopTask = await kanbanTasksService.GetKanbanTasksByStatusQuery(newStatus)
+                .Select(kt => new IdPriority { Id = kt.Id, Priority = kt.Priority })
+                .OrderBy(kt => kt.Priority)
+                .FirstOrDefaultAsync();
+
+            // calculate new priority
+            double newPriority = GetNewPriority(null, newStatusTopTask);
+
+            newKanbanTask.Priority = newPriority;
             await db.AddAsync(newKanbanTask);
             await db.SaveChangesAsync();
             await tran.CommitAsync();
@@ -166,7 +181,7 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
 
         // get all tasks with NewStatus
         var newStatusTasks = await kanbanTasksService.GetKanbanTasksByStatusQuery(newStatus)
-            .Select(kt => new { kt.Id, kt.Priority })
+            .Select(kt => new IdPriority { Id = kt.Id, Priority = kt.Priority })
             .OrderBy(kt => kt.Priority)
             .ToListAsync();
 
@@ -188,10 +203,7 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
         var taskBefore = posTaskBefore == -1 ? null : newStatusTasks[posTaskBefore];
 
         // calculate new priority
-        double newPriority =
-            taskBefore == null
-                ? (taskAfter?.Priority ?? 0) + 10
-                : taskBefore.Priority - (taskBefore.Priority - (taskAfter?.Priority ?? 0)) * 0.1;
+        double newPriority = GetNewPriority(taskAfter, taskBefore);
 
         var now = DateTime.UtcNow;
 

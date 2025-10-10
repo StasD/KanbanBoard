@@ -47,3 +47,9 @@ public record KanbanTaskModel
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public UserModel? UpdatedByUser { get; init; }
 }
+
+public record IdPriority
+{
+    public int Id { get; init; }
+    public double Priority { get; init; }
+}
