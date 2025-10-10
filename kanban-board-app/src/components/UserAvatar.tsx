@@ -8,11 +8,9 @@ function UserAvatar({
   color = 'default' as heroColor,
   size = 'md' as heroSize,
 }) {
-  return (
-    <Tooltip content={userName}>
-      <Avatar showFallback isBordered={isBordered} color={color} size={size} src={photoUrl} />
-    </Tooltip>
-  );
+  const avatar = <Avatar showFallback isBordered={isBordered} color={color} size={size} src={photoUrl} />;
+
+  return userName ? <Tooltip content={userName}>{avatar}</Tooltip> : avatar;
 }
 
 export default UserAvatar;

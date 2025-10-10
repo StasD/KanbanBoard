@@ -5,7 +5,7 @@ import useDndStore from '@/stores/useDndStore';
 function useDrag<TItem extends { id: number }>(itemType: string, item: TItem) {
   const ref: React.RefObject<HTMLDivElement | null> = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
-  const ghostImage = useDndStore((state) => state.ghostImageRef);
+  const ghostImageRef = useDndStore((state) => state.ghostImageRef);
   const setActiveItem = useDndStore((state) => state.setActiveItem);
 
   const onDragStart = useCallback(
@@ -18,34 +18,34 @@ function useDrag<TItem extends { id: number }>(itemType: string, item: TItem) {
 
         const elRect = el.getBoundingClientRect();
 
-        ghostImage.current = el.cloneNode(true) as HTMLDivElement;
+        ghostImageRef.current = el.cloneNode(true) as HTMLDivElement;
 
-        ghostImage.current.style.width = `${el.clientWidth}px`;
-        ghostImage.current.style.position = 'absolute';
-        ghostImage.current.style.left = '-1000px';
-        ghostImage.current.style.top = '-1000px';
+        ghostImageRef.current.style.width = `${el.clientWidth}px`;
+        ghostImageRef.current.style.position = 'absolute';
+        ghostImageRef.current.style.left = '-1000px';
+        ghostImageRef.current.style.top = '-1000px';
 
-        document.body.appendChild(ghostImage.current);
+        document.body.appendChild(ghostImageRef.current);
 
         e.dataTransfer.clearData();
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setDragImage(ghostImage.current, e.clientX - elRect.x, e.clientY - elRect.y);
+        e.dataTransfer.setDragImage(ghostImageRef.current, e.clientX - elRect.x, e.clientY - elRect.y);
         e.dataTransfer.items.add(`${itemType}_${item.id}`, itemType);
 
         setActiveItem<TItem>(item);
       }
     },
-    [ghostImage, itemType, item, setActiveItem],
+    [ghostImageRef, itemType, item, setActiveItem],
   );
 
   const onDragEnd = useCallback(() => {
-    if (ghostImage.current) {
-      document.body.removeChild(ghostImage.current);
-      ghostImage.current = null;
+    if (ghostImageRef.current) {
+      document.body.removeChild(ghostImageRef.current);
+      ghostImageRef.current = null;
     }
     setActiveItem<TItem>(null);
     setIsDragging(false);
-  }, [ghostImage, setActiveItem]);
+  }, [ghostImageRef, setActiveItem]);
 
   useEffect(() => {
     const el = ref.current;

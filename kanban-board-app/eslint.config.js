@@ -15,10 +15,12 @@ const eslintConfig = defineConfig([
   globalIgnores(['dist']),
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    plugins: {
-      'react-hooks': reactHooks,
-    },
-    extends: [js.configs.recommended, tseslint.configs.strict, 'react-hooks/recommended', reactRefresh.configs.vite],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.strict,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
@@ -29,6 +31,8 @@ const eslintConfig = defineConfig([
     },
     rules: {
       'no-unused-vars': 'off',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
       '@typescript-eslint/no-unused-vars': [
         'warn',
         { ignoreRestSiblings: true, argsIgnorePattern: '^_', varsIgnorePattern: '^_' },

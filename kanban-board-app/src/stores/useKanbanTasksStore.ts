@@ -8,6 +8,7 @@ interface KanbanTasksStore {
   isUpdatingTaskLocation: boolean;
   updateTaskLocationError: AxiosError | null;
   setKanbanTasks: (kanbanTasks: KanbanTask[] | null) => void;
+  addKanbanTask: (kanbanTask: KanbanTask) => void;
   resetUpdateTaskLocationError: () => void;
   updateTaskLocation: (
     kanbanTaskId: number,
@@ -23,6 +24,8 @@ const useKanbanTasksStore = create<KanbanTasksStore>()((set, get) => ({
   updateTaskLocationError: null,
 
   setKanbanTasks: (kanbanTasks) => set({ kanbanTasks }),
+
+  addKanbanTask: (kanbanTask) => set((state) => ({ kanbanTasks: [...(state.kanbanTasks ?? []), kanbanTask] })),
 
   resetUpdateTaskLocationError: () => set({ updateTaskLocationError: null }),
 

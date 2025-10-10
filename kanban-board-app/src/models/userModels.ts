@@ -6,4 +6,6 @@ interface User {
   photoUrl: string;
 }
 
-export { type User };
+const getFullName = (user?: User | null) => (user ? `${user.firstName} ${user.lastName}`.trim() : '');
+
+export { type User, getFullName };

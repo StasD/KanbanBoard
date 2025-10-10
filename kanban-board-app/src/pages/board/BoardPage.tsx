@@ -7,8 +7,11 @@ import useFetchFunction from '@/hooks/useFetchFunction';
 import useDisplayErrorToast from '@/hooks/useDisplayErrorToast';
 import DisplayError from '@/components/DisplayError';
 import KanbanColumn from '@/components/KanbanColumn';
+import KanbanTaskCreateEditModal from '@/components/KanbanTaskCreateEditModal';
 import Loading from '@/components/Loading';
 import useKanbanTasksStore from '@/stores/useKanbanTasksStore';
+import { Button, useDisclosure } from '@heroui/react';
+import { DocumentPlusIcon } from '@heroicons/react/24/solid';
 
 function BoardPage({ breadcrumbPath = '' }) {
   useFixedLayout(true);
@@ -31,14 +34,26 @@ function BoardPage({ breadcrumbPath = '' }) {
     setKanbanTasks(null);
   }, [setKanbanTasks]);
 
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+
   // const taskId = 2345;
   // const fetchFunction = useCallback(() => getKanbanTask(taskId), [taskId]);
 
   const { isLoading, loadingError } = useFetchFunction(getKanbanTasks, setKanbanTasks); // data: kanbanTasks,
 
+  // const onAddKanbanTask = useCallback(() => {
+  //   alert('Hi There!');
+  // }, []);
+
   return (
     <>
-      <p className="text-3xl font-semibold my-5 mx-auto">Kanban Board</p>
+      <div className="flex items-center justify-between px-4">
+        <p className="text-3xl font-semibold my-5">Kanban Board</p>
+        <Button color="primary" onPress={onOpen}>
+          <DocumentPlusIcon className="w-6" />
+          <span>New Kanban Task</span>
+        </Button>
+      </div>
       {isLoading && (
         <div className="flex flex-col items-center justify-center grow w-full p-2">
           <Loading size="lg" />
@@ -56,6 +71,7 @@ function BoardPage({ breadcrumbPath = '' }) {
           ))}
         </div>
       )}
+      {isOpen && <KanbanTaskCreateEditModal isOpen={isOpen} onOpenChange={onOpenChange} />}
     </>
   );
 }

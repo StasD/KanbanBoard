@@ -47,9 +47,9 @@ const kanbanTaskStatuses = [
 type KanbanTaskStatusEnum = (typeof KanbanTaskStatus)[keyof typeof KanbanTaskStatus];
 
 interface KanbanTaskModel {
-  title: string | null;
-  description: string | null;
-  status: KanbanTaskStatusEnum;
+  title: string;
+  description: string;
+  status: KanbanTaskStatusEnum | null;
   assignedUserId: number | null;
 }
 
