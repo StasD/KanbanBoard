@@ -11,19 +11,18 @@ function useFetchFunction<T>(
   const [loadingError, setLoadingError] = useState<AxiosError | null>(null);
 
   const fetchData = useCallback(async () => {
+    setData(null);
+    setIsLoading(true);
+    setLoadingError(null);
+
     try {
-      setData(null);
-      setLoadingError(null);
-      setIsLoading(true);
-
       const _data = await fetchFunction();
-
-      setIsLoading(false);
       setData(_data);
       cb?.(_data);
     } catch (e) {
-      setIsLoading(false);
       setLoadingError(e as AxiosError | null);
+    } finally {
+      setIsLoading(false);
     }
   }, [cb, fetchFunction]);
 

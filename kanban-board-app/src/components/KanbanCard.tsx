@@ -21,22 +21,20 @@ function KanbanCard({ kanbanTask, cardStyle }: { kanbanTask: KanbanTask; cardSty
       shadow="sm"
       className={`shrink-0 w-full py-2 ${cardStyle} ${isDragging ? 'opacity-50 cursor-grabbing' : 'cursor-grab'}`}
     >
-      <CardHeader className="flex-col items-start px-4 py-2">
-        <h4 className="font-semibold text-medium">
-          {`#${kanbanTask.id}`} {kanbanTask.title}
-        </h4>
+      <CardHeader className="items-start px-4 py-2">
+        <h4 className="w-full break-words font-semibold text-medium">{`#${kanbanTask.id}\u00A0${kanbanTask.title}`}</h4>
       </CardHeader>
       <CardBody className="px-4 py-2">
         <p className="text-medium">{kanbanTask.description}</p>
       </CardBody>
-      <CardFooter className="text-small justify-between px-4 py-2">
+      <CardFooter className="text-small items-center justify-between px-4 py-2 gap-2">
         <div>
           <p>{assignedTo}</p>
-          <p>
-            <small className="text-default-500">
-              {assignedAt ? `Since ${utcDateToDateStr(assignedAt)}` : '\u00A0'}
-            </small>
-          </p>
+          {assignedAt && (
+            <p>
+              <small className="text-default-500">{`Since ${utcDateToDateStr(assignedAt)}`}</small>
+            </p>
+          )}
         </div>
         <UserAvatar userName={assignedUserName} photoUrl={assignedUserUrl} />
       </CardFooter>

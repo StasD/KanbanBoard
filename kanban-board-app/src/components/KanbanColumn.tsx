@@ -29,7 +29,7 @@ function KanbanColumn({ kanbanTasks, taskStatus }: { kanbanTasks: KanbanTask[]; 
   return (
     <div
       ref={ref}
-      className={`flex flex-col overflow-auto items-start flex-1 max-w-[300px] ${taskStatusConfig.bgColor} rounded-md border-2 ${activeStatus === taskStatus ? 'border-blue-600' : taskStatusConfig.borderColor}`}
+      className={`flex flex-col overflow-auto items-start flex-1 min-w-[280px] max-w-[300px] ${taskStatusConfig.bgColor} rounded-md border-2 ${activeStatus === taskStatus ? 'border-blue-600' : taskStatusConfig.borderColor}`}
     >
       <div className="flex w-full items-center justify-between py-3 px-2">
         <Chip

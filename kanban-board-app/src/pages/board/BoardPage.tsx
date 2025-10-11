@@ -65,7 +65,7 @@ function BoardPage({ breadcrumbPath = '' }) {
         </div>
       )}
       {kanbanTasks && (
-        <div className="flex flex-row grow overflow-auto w-full justify-between p-2 gap-2 border-0 border-amber-500">
+        <div className="flex flex-row grow overflow-auto w-full justify-between p-2 gap-2">
           {kanbanTaskStatuses.map((ts) => (
             <KanbanColumn key={ts.status} kanbanTasks={kanbanTasks} taskStatus={ts.status} />
           ))}

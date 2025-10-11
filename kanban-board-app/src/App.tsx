@@ -11,7 +11,14 @@ function App() {
 
   return (
     <HeroUIProvider navigate={navigate} useHref={useHref}>
-      <ToastProvider placement="top-center" />
+      <ToastProvider
+        placement="top-center"
+        toastProps={{
+          classNames: {
+            base: 'rounded-lg shadow-lg sm:w-fit sm:min-w-[356px] sm:max-w-[500px]',
+          },
+        }}
+      />
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage breadcrumbPath={'/'} />} />

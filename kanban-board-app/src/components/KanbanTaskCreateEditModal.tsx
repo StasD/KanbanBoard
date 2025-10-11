@@ -34,6 +34,14 @@ function KanbanTaskCreateEditModal({
   isOpen: boolean;
   onOpenChange: () => void;
 }) {
+  const formatErrors = ({ validationErrors }: { validationErrors: string[] }) => (
+    <ul>
+      {validationErrors.map((error, i) => (
+        <li key={i}>{error}</li>
+      ))}
+    </ul>
+  );
+
   const onCloseRef = useRef<(() => void) | null>(null);
 
   const addKanbanTask = useKanbanTasksStore((state) => state.addKanbanTask);
@@ -71,9 +79,6 @@ function KanbanTaskCreateEditModal({
         color: 'success',
         title: <p className="font-semibold">Success!</p>,
         description: `New kanban task has been successfully created. Task Id: #${newKanbanTask.id}`,
-        classNames: {
-          base: 'rounded-lg shadow-lg',
-        },
       });
       if (onCloseRef.current) onCloseRef.current();
     }
@@ -126,7 +131,7 @@ function KanbanTaskCreateEditModal({
                   <ModalBody className="gap-2">
                     <div>
                       <Input
-                        name="Title"
+                        name="title"
                         label="Title"
                         labelPlacement="outside"
                         placeholder="Enter task title"
@@ -134,14 +139,16 @@ function KanbanTaskCreateEditModal({
                         value={kanbanTask.title}
                         onValueChange={(v) => setKanbanTask({ ...kanbanTask, title: v })}
                         onBlur={() => setKanbanTask({ ...kanbanTask, title: kanbanTask.title.trim() })}
-                        // validate={(value) => (!value ? 'Title is required' : null)}
+                        validate={(value) => (!value ? 'Title is required' : null)}
+                        errorMessage={formatErrors}
+                        maxLength={100}
                         variant="bordered"
-                        // isRequired
+                        isRequired
                       />
                     </div>
                     <div>
                       <Textarea
-                        name="Description"
+                        name="description"
                         label="Description"
                         labelPlacement="outside"
                         placeholder="Enter task description"
@@ -149,26 +156,31 @@ function KanbanTaskCreateEditModal({
                         value={kanbanTask.description}
                         onValueChange={(v) => setKanbanTask({ ...kanbanTask, description: v })}
                         onBlur={() => setKanbanTask({ ...kanbanTask, description: kanbanTask.description.trim() })}
-                        // validate={(value) => (!value ? 'Description is required' : null)}
+                        validate={(value) => (!value ? 'Description is required' : null)}
+                        errorMessage={formatErrors}
+                        maxLength={200}
                         variant="bordered"
-                        // isRequired
+                        isRequired
                       />
                     </div>
                     <div className="flex flex-wrap items-start justify-start gap-2">
                       <div className="grow">
                         <Select
-                          name="Status"
+                          name="status"
                           classNames={{
                             base: 'grow min-w-3xs',
                             trigger: 'h-12',
+                            label:
+                              'group-data-[has-helper=true]:-translate-y-[calc(100%_+_var(--heroui-font-size-small)/2_+_20px)] group-data-[invalid=true]:-translate-y-[calc(100%_+_var(--heroui-font-size-small)/2_+_30px)]',
                           }}
                           label="Status"
                           labelPlacement="outside"
                           placeholder="Select task status"
                           isDisabled={isLoading}
-                          // validate={(value) => (!value ? 'Status is required' : null)}
+                          validate={(value) => (!value ? 'Status is required' : null)}
+                          errorMessage={formatErrors}
                           variant="bordered"
-                          // isRequired
+                          isRequired
                           disallowEmptySelection
                           isClearable={true}
                           items={kanbanTaskStatuses}
@@ -209,15 +221,18 @@ function KanbanTaskCreateEditModal({
                       </div>
                       <div className="grow">
                         <Select
-                          name="AssignedUserId"
+                          name="assignedUserId"
                           classNames={{
                             base: 'grow min-w-xs',
                             trigger: 'h-12',
+                            label:
+                              'group-data-[has-helper=true]:-translate-y-[calc(100%_+_var(--heroui-font-size-small)/2_+_20px)] group-data-[invalid=true]:-translate-y-[calc(100%_+_var(--heroui-font-size-small)/2_+_30px)]',
                           }}
                           label="Assigned to"
                           labelPlacement="outside"
                           placeholder="Select user to whom the task is assigned"
                           isDisabled={isLoading}
+                          errorMessage={formatErrors}
                           variant="bordered"
                           disallowEmptySelection
                           isClearable={true}

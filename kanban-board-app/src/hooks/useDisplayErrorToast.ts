@@ -12,9 +12,6 @@ function useDisplayErrorToast(
       addToast({
         color: 'danger',
         hideIcon: true,
-        classNames: {
-          base: 'rounded-lg shadow-lg',
-        },
         onClose,
         description: node,
       });
