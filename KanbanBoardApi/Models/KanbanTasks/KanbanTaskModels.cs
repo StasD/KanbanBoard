@@ -2,23 +2,28 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using KanbanBoardApi.Entities;
 using KanbanBoardApi.Models.Users;
+using KanbanBoardApi.ModelValidations;
 
 namespace KanbanBoardApi.Models.KanbanTasks;
-
-// in input models, fields declared nullable but with [Required] attribute so that passing json with a missing string field resulted in meaningful 400 error returned to the client, and also did not result in using default values e.g. 0.
 
 public record KanbanTaskInputModel
 {
     [Required]
+    [MinLength(5, ErrorMessage = "Title cannot be less than 5 characters long.")]
+    [MaxLength(100, ErrorMessage = "Title cannot exceed 100 characters.")]
     public string? Title { get; init; }
 
     [Required]
+    [MinLength(5, ErrorMessage = "Description cannot be less than 5 characters long.")]
+    [MaxLength(2000, ErrorMessage = "Description cannot exceed 2000 characters.")]
     public string? Description { get; init; }
 
     [Required]
     [EnumDataType(typeof(KanbanTaskStatus))]
     public KanbanTaskStatus? Status { get; init; }
 
+    [IsValidUserId]
+    [Display(Name = "Assigned User Id")]
     public int? AssignedUserId { get; init; }
 }
 

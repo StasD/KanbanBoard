@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.DataProtection;
 
 // using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
@@ -63,12 +64,15 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<KanbanTasksService>();
 builder.Services.AddScoped<UsersService>();
 
-builder.Services.AddControllers();
-
 // Set the JSON serializer options
 builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
 {
     options.SerializerOptions.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+});
+
+builder.Services.AddControllers(options =>
+{
+    options.ModelMetadataDetailsProviders.Add(new SystemTextJsonValidationMetadataProvider());
 });
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
