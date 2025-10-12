@@ -3,12 +3,14 @@ import { type KanbanTaskStatusEnum, type KanbanTask } from '@/models/kanbanTaskM
 import { updateKanbanTaskLocation } from '@/api/kanbanTasksApi';
 import { type AxiosError } from '@/lib/errors';
 
+const findPos = (kanbanTasks: KanbanTask[] | null, id: number) => kanbanTasks?.findIndex((kt) => kt.id === id) ?? -1;
+
 interface KanbanTasksStore {
   kanbanTasks: KanbanTask[] | null;
   isUpdatingTaskLocation: boolean;
   updateTaskLocationError: AxiosError | null;
   setKanbanTasks: (kanbanTasks: KanbanTask[] | null) => void;
-  addKanbanTask: (kanbanTask: KanbanTask) => void;
+  addUpdateKanbanTask: (kanbanTask: KanbanTask) => void;
   resetUpdateTaskLocationError: () => void;
   updateTaskLocation: (
     kanbanTaskId: number,
@@ -25,7 +27,20 @@ const useKanbanTasksStore = create<KanbanTasksStore>()((set, get) => ({
 
   setKanbanTasks: (kanbanTasks) => set({ kanbanTasks }),
 
-  addKanbanTask: (kanbanTask) => set((state) => ({ kanbanTasks: [...(state.kanbanTasks ?? []), kanbanTask] })),
+  addUpdateKanbanTask: (kanbanTask) => {
+    const state = get();
+    const kanbanTasks = state.kanbanTasks;
+
+    if (kanbanTasks) {
+      const posKanbanTask = findPos(kanbanTasks, kanbanTask.id);
+      set({
+        kanbanTasks:
+          posKanbanTask >= 0
+            ? [...kanbanTasks.slice(0, posKanbanTask), kanbanTask, ...kanbanTasks.slice(posKanbanTask + 1)]
+            : [...kanbanTasks, kanbanTask],
+      });
+    }
+  },
 
   resetUpdateTaskLocationError: () => set({ updateTaskLocationError: null }),
 
@@ -38,11 +53,9 @@ const useKanbanTasksStore = create<KanbanTasksStore>()((set, get) => ({
 
     if (!kanbanTasks) return;
 
-    const findPos = (id: number) => (id > 0 ? (kanbanTasks.findIndex((kt) => kt.id === id) ?? null) : null);
-
-    const posKanbanTask = findPos(kanbanTaskId);
-    const posTaskAfter = findPos(idAfter);
-    const posTaskBefore = findPos(idBefore);
+    const posKanbanTask = findPos(kanbanTasks, kanbanTaskId);
+    const posTaskAfter = findPos(kanbanTasks, idAfter);
+    const posTaskBefore = findPos(kanbanTasks, idBefore);
 
     if (posKanbanTask === null || (idAfter > 0 && posTaskAfter === null) || (idBefore > 0 && posTaskBefore === null))
       return; // this should not happen
@@ -59,11 +72,7 @@ const useKanbanTasksStore = create<KanbanTasksStore>()((set, get) => ({
     // all good, send update request to the server
     try {
       const updatedTask = await updateKanbanTaskLocation(kanbanTaskId, newStatus, idAfter, idBefore);
-      state.setKanbanTasks([
-        ...kanbanTasks.slice(0, posKanbanTask),
-        updatedTask,
-        ...kanbanTasks.slice(posKanbanTask + 1),
-      ]);
+      state.addUpdateKanbanTask(updatedTask);
       set({ isUpdatingTaskLocation: false, updateTaskLocationError: null });
     } catch (e) {
       set({ isUpdatingTaskLocation: false, updateTaskLocationError: e as AxiosError });

@@ -18,22 +18,30 @@ import {
 } from '@heroui/react';
 import useFetchFunction from '@/hooks/useFetchFunction';
 import { getUsers } from '@/api/usersApi';
-import { createKanbanTask } from '@/api/kanbanTasksApi'; // getKanbanTask,
-import { kanbanTaskStatuses, type KanbanTaskStatusEnum, type KanbanTaskModel } from '@/models/kanbanTaskModels'; // , type KanbanTask
+import { getKanbanTask, createKanbanTask, updateKanbanTask } from '@/api/kanbanTasksApi';
+import {
+  kanbanTaskStatuses,
+  type KanbanTaskStatusEnum,
+  type KanbanTaskModel,
+  type KanbanTask,
+} from '@/models/kanbanTaskModels';
 import { getFullName } from '@/models/userModels';
 import useDisplayErrorToast from '@/hooks/useDisplayErrorToast';
 import DisplayError from '@/components/DisplayError';
 import useKanbanTasksStore from '@/stores/useKanbanTasksStore';
+import { utcDateToDateTimeStr } from '@/lib/helperFunctions';
 
 function KanbanTaskCreateEditModal({
-  kanbanTaskId = null,
+  kanbanTaskId,
   isOpen,
   onOpenChange,
 }: {
-  kanbanTaskId?: number | null;
+  kanbanTaskId?: number;
   isOpen: boolean;
   onOpenChange: () => void;
 }) {
+  // setting up
+
   const formatErrors = ({ validationErrors }: { validationErrors: string[] }) => (
     <ul>
       {validationErrors.map((error, i) => (
@@ -44,68 +52,142 @@ function KanbanTaskCreateEditModal({
 
   const onCloseRef = useRef<(() => void) | null>(null);
 
-  const addKanbanTask = useKanbanTasksStore((state) => state.addKanbanTask);
-
-  const [kanbanTask, setKanbanTask] = useState<KanbanTaskModel>({
+  const emptyKanbanTask = {
     title: '',
     description: '',
     status: null,
     assignedUserId: null,
-  });
+  };
+
+  const [originalKanbanTask, setOriginalKanbanTask] = useState<KanbanTaskModel>(emptyKanbanTask);
+  const [kanbanTask, setKanbanTask] = useState<KanbanTaskModel>(emptyKanbanTask);
+
+  // users
 
   const {
     data: unsortedUsers,
     isLoading: isLoadingUsers,
     loadingError: usersLoadingError,
-    resetLoadingError: resetUsersLoadingError,
   } = useFetchFunction(getUsers);
 
-  const {
-    data: newKanbanTask,
-    isLoading: isLoadingCreateKanbanTask,
-    loadingError: createKanbanTaskError,
-    // resetLoadingError: resetCreateKanbanTaskError,
-    fetchData: fetchCreateKanbanTask,
-  } = useFetchFunction(() => createKanbanTask(kanbanTask), null, false);
+  const usersLoadingErrorAlert = useMemo(
+    () =>
+      usersLoadingError ? (
+        <DisplayError error={usersLoadingError} title="Could not load users" isInToast={true} />
+      ) : null,
+    [usersLoadingError],
+  );
+
+  useDisplayErrorToast(usersLoadingError, usersLoadingErrorAlert);
 
   const users = unsortedUsers?.sort((u1, u2) => getFullName(u1).localeCompare(getFullName(u2))) ?? [];
 
-  const isLoading = isLoadingUsers || isLoadingCreateKanbanTask;
+  // kanbanTaskToEdit
+
+  const retrieveKanbanTask = useCallback(
+    () => (kanbanTaskId !== undefined ? getKanbanTask(kanbanTaskId) : null),
+    [kanbanTaskId],
+  );
+
+  const retrieveKanbanTaskCb = useCallback((_kanbanTask: KanbanTask | null) => {
+    if (_kanbanTask) {
+      const kanbanTaskModel = {
+        title: _kanbanTask.title,
+        description: _kanbanTask.description,
+        status: _kanbanTask.status,
+        assignedUserId: _kanbanTask.assignedUserId,
+      };
+      setOriginalKanbanTask(kanbanTaskModel);
+      setKanbanTask(kanbanTaskModel);
+    }
+  }, []);
+
+  const {
+    data: kanbanTaskToEdit,
+    isLoading: kanbanTaskToEditLoading,
+    loadingError: kanbanTaskToEditLoadingError,
+  } = useFetchFunction(retrieveKanbanTask, retrieveKanbanTaskCb);
+
+  const kanbanTaskToEditLoadingErrorAlert = useMemo(
+    () =>
+      kanbanTaskToEditLoadingError ? (
+        <DisplayError
+          error={kanbanTaskToEditLoadingError}
+          title="Could not retrieve kanban task data."
+          isInToast={true}
+        />
+      ) : null,
+    [kanbanTaskToEditLoadingError],
+  );
+
+  useDisplayErrorToast(kanbanTaskToEditLoadingError, kanbanTaskToEditLoadingErrorAlert);
+
+  // kanbanTaskNewOrUpdated
+
+  const createUpdateKanbanTask = useCallback(
+    () => (kanbanTaskId !== undefined ? updateKanbanTask(kanbanTaskId, kanbanTask) : createKanbanTask(kanbanTask)),
+    [kanbanTask, kanbanTaskId],
+  );
+
+  const addUpdateKanbanTask = useKanbanTasksStore((state) => state.addUpdateKanbanTask);
+
+  const createUpdateKanbanTaskCb = useCallback(
+    (kanbanTaskNewOrUpdated?: KanbanTask | null) => {
+      if (kanbanTaskNewOrUpdated) {
+        addUpdateKanbanTask(kanbanTaskNewOrUpdated);
+        addToast({
+          color: 'success',
+          title: <p className="font-semibold">Success!</p>,
+          description:
+            kanbanTaskId !== undefined
+              ? `Kanban task #${kanbanTaskNewOrUpdated.id} has been successfully updated.`
+              : `New kanban task has been successfully created. Task Id: #${kanbanTaskNewOrUpdated.id}`,
+        });
+        if (onCloseRef.current) onCloseRef.current();
+      }
+    },
+    [addUpdateKanbanTask, kanbanTaskId],
+  );
+
+  const {
+    // data: kanbanTaskNewOrUpdated,
+    isLoading: kanbanTaskCreateUpdateIsLoading,
+    loadingError: kanbanTaskCreateUpdateError,
+    fetchData: fetchCreateUpdateKanbanTask,
+  } = useFetchFunction(createUpdateKanbanTask, createUpdateKanbanTaskCb, false);
+
+  const kanbanTaskCreateUpdateErrorAlert = useMemo(
+    () =>
+      kanbanTaskCreateUpdateError ? (
+        <DisplayError
+          error={kanbanTaskCreateUpdateError}
+          title={`Could not ${kanbanTaskId !== undefined ? 'update' : 'create'} kanban task`}
+          isInToast={true}
+        />
+      ) : null,
+    [kanbanTaskCreateUpdateError, kanbanTaskId],
+  );
+
+  useDisplayErrorToast(kanbanTaskCreateUpdateError, kanbanTaskCreateUpdateErrorAlert);
+
+  // other
+
+  const isLoading = isLoadingUsers || kanbanTaskToEditLoading || kanbanTaskCreateUpdateIsLoading;
+  const isDisabled = isLoading || usersLoadingError !== null || kanbanTaskToEditLoadingError !== null;
+  const isChanged = JSON.stringify(kanbanTask) !== JSON.stringify(originalKanbanTask);
+
+  const firstInput = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (newKanbanTask) {
-      addKanbanTask(newKanbanTask);
-      addToast({
-        color: 'success',
-        title: <p className="font-semibold">Success!</p>,
-        description: `New kanban task has been successfully created. Task Id: #${newKanbanTask.id}`,
-      });
-      if (onCloseRef.current) onCloseRef.current();
-    }
-  }, [addKanbanTask, newKanbanTask]);
-
-  useDisplayErrorToast(
-    usersLoadingError,
-    usersLoadingError ? <DisplayError error={usersLoadingError} title="Could not load users" isInToast={true} /> : null,
-    resetUsersLoadingError,
-  );
-
-  const createKanbanTaskErrorAlert = useMemo(
-    () =>
-      createKanbanTaskError ? (
-        <DisplayError error={createKanbanTaskError} title="Could not create kanban task" isInToast={true} />
-      ) : null,
-    [createKanbanTaskError],
-  );
-
-  useDisplayErrorToast(createKanbanTaskError, createKanbanTaskErrorAlert);
+    firstInput.current?.focus();
+  }, [firstInput, isDisabled, kanbanTaskCreateUpdateError]);
 
   const onSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
-      await fetchCreateKanbanTask();
+      await fetchCreateUpdateKanbanTask();
     },
-    [fetchCreateKanbanTask],
+    [fetchCreateUpdateKanbanTask],
   );
 
   return (
@@ -113,7 +195,7 @@ function KanbanTaskCreateEditModal({
       <Modal size="2xl" isOpen={isOpen} placement="top-center" onOpenChange={onOpenChange}>
         <Form
           onSubmit={onSubmit}
-          validationErrors={createKanbanTaskError?.response?.data?.errors ?? undefined}
+          validationErrors={kanbanTaskCreateUpdateError?.response?.data?.errors ?? undefined}
           autoComplete="off"
         >
           <ModalContent>
@@ -126,16 +208,17 @@ function KanbanTaskCreateEditModal({
                     {isLoading && <Progress isIndeterminate aria-label="Loading..." className="w-full h-1" />}
                   </div>
                   <ModalHeader className="flex flex-col gap-1">
-                    {kanbanTaskId ? 'Edit Kanban Task' : 'New Kanban Task'}
+                    {kanbanTaskId !== undefined ? `Edit Kanban Task (Id: ${kanbanTaskId})` : 'New Kanban Task'}
                   </ModalHeader>
                   <ModalBody className="gap-2">
                     <div>
                       <Input
+                        ref={firstInput}
                         name="title"
                         label="Title"
                         labelPlacement="outside"
                         placeholder="Enter task title"
-                        isDisabled={isLoading}
+                        isDisabled={isDisabled}
                         value={kanbanTask.title}
                         onValueChange={(v) => setKanbanTask({ ...kanbanTask, title: v })}
                         onBlur={() => setKanbanTask({ ...kanbanTask, title: kanbanTask.title.trim() })}
@@ -152,13 +235,13 @@ function KanbanTaskCreateEditModal({
                         label="Description"
                         labelPlacement="outside"
                         placeholder="Enter task description"
-                        isDisabled={isLoading}
+                        isDisabled={isDisabled}
                         value={kanbanTask.description}
                         onValueChange={(v) => setKanbanTask({ ...kanbanTask, description: v })}
                         onBlur={() => setKanbanTask({ ...kanbanTask, description: kanbanTask.description.trim() })}
                         validate={(value) => (!value ? 'Description is required' : null)}
                         errorMessage={formatErrors}
-                        maxLength={200}
+                        maxLength={2000}
                         variant="bordered"
                         isRequired
                       />
@@ -176,7 +259,7 @@ function KanbanTaskCreateEditModal({
                           label="Status"
                           labelPlacement="outside"
                           placeholder="Select task status"
-                          isDisabled={isLoading}
+                          isDisabled={isDisabled}
                           validate={(value) => (!value ? 'Status is required' : null)}
                           errorMessage={formatErrors}
                           variant="bordered"
@@ -231,7 +314,7 @@ function KanbanTaskCreateEditModal({
                           label="Assigned to"
                           labelPlacement="outside"
                           placeholder="Select user to whom the task is assigned"
-                          isDisabled={isLoading}
+                          isDisabled={isDisabled}
                           errorMessage={formatErrors}
                           variant="bordered"
                           disallowEmptySelection
@@ -276,12 +359,18 @@ function KanbanTaskCreateEditModal({
                       </div>
                     </div>
                   </ModalBody>
-                  <ModalFooter>
+                  <ModalFooter className="items-center">
+                    {kanbanTaskToEdit && (
+                      <div className="flex flex-col grow gap-1">
+                        <small className="text-default-500 wrap-break-word">{`Created ${utcDateToDateTimeStr(kanbanTaskToEdit.createdAt)}${kanbanTaskToEdit.createdByUser ? ` by ${getFullName(kanbanTaskToEdit.createdByUser)} ` : ''}`}</small>
+                        <small className="text-default-500 wrap-break-word">{`Updated ${utcDateToDateTimeStr(kanbanTaskToEdit.updatedAt)}${kanbanTaskToEdit.updatedByUser ? ` by ${getFullName(kanbanTaskToEdit.updatedByUser)} ` : ''}`}</small>
+                      </div>
+                    )}
                     <Button variant="flat" onPress={onClose}>
                       Close
                     </Button>
-                    <Button color="primary" type="submit" isDisabled={isLoading}>
-                      {kanbanTaskId ? 'Save Task' : 'Create Task'}
+                    <Button color="primary" type="submit" isDisabled={isDisabled || !isChanged}>
+                      {kanbanTaskId !== undefined ? 'Save Task' : 'Create Task'}
                     </Button>
                   </ModalFooter>
                 </>

@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { getKanbanTasks } from '@/api/kanbanTasksApi'; // , getKanbanTask , createKanbanTask
+import { useEffect, useMemo } from 'react';
+import { getKanbanTasks } from '@/api/kanbanTasksApi';
 import { kanbanTaskStatuses } from '@/models/kanbanTaskModels';
 import useFixedLayout from '@/hooks/useFixedLayout';
 import useBreadcrumbPath from '@/hooks/useBreadcrumbPath';
@@ -22,13 +22,15 @@ function BoardPage({ breadcrumbPath = '' }) {
   const resetUpdateTaskLocationError = useKanbanTasksStore((state) => state.resetUpdateTaskLocationError);
   const setKanbanTasks = useKanbanTasksStore((state) => state.setKanbanTasks);
 
-  useDisplayErrorToast(
-    updateTaskLocationError,
-    updateTaskLocationError ? (
-      <DisplayError error={updateTaskLocationError} title="Could not update Kanban Task" isInToast={true} />
-    ) : null,
-    resetUpdateTaskLocationError,
+  const updateTaskLocationErrorAlert = useMemo(
+    () =>
+      updateTaskLocationError ? (
+        <DisplayError error={updateTaskLocationError} title="Could not update Kanban Task" isInToast={true} />
+      ) : null,
+    [updateTaskLocationError],
   );
+
+  useDisplayErrorToast(updateTaskLocationError, updateTaskLocationErrorAlert, resetUpdateTaskLocationError);
 
   useEffect(() => {
     setKanbanTasks(null);
@@ -36,14 +38,7 @@ function BoardPage({ breadcrumbPath = '' }) {
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
-  // const taskId = 2345;
-  // const fetchFunction = useCallback(() => getKanbanTask(taskId), [taskId]);
-
-  const { isLoading, loadingError } = useFetchFunction(getKanbanTasks, setKanbanTasks); // data: kanbanTasks,
-
-  // const onAddKanbanTask = useCallback(() => {
-  //   alert('Hi There!');
-  // }, []);
+  const { isLoading, loadingError } = useFetchFunction(getKanbanTasks, setKanbanTasks);
 
   return (
     <>

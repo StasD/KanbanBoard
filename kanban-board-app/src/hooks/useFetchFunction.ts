@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { type AxiosError } from '@/lib/errors';
 
 function useFetchFunction<T>(
-  fetchFunction: () => Promise<T>,
+  fetchFunction: () => Promise<T> | null,
   cb: ((_data: T | null) => void) | null = null,
   runImmediately = true,
 ) {
@@ -34,7 +34,6 @@ function useFetchFunction<T>(
     data,
     isLoading,
     loadingError,
-    resetLoadingError: () => setLoadingError(null),
     fetchData,
   };
 }

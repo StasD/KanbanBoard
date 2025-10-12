@@ -1,12 +1,21 @@
-function utcDateToDateStr(dt?: Date | null) {
-  return dt
-    ? new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit',
-      }).format(dt)
-    : null;
-}
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
+
+const utcDateToDateStr = (dt: Date | null) => (dt ? dateFormatter.format(dt) : null);
+
+const utcDateToDateTimeStr = (dt: Date | null) => (dt ? dateTimeFormatter.format(dt) : null);
 
 type TraverseTreeCb = (node: Element) => void;
 
@@ -20,4 +29,4 @@ function traverseTree(node: Element, cb: TraverseTreeCb) {
   }
 }
 
-export { utcDateToDateStr, traverseTree };
+export { utcDateToDateStr, utcDateToDateTimeStr, traverseTree };
