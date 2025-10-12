@@ -18,6 +18,8 @@ import UserAvatar from '@/components/UserAvatar';
 import useDrag from '@/hooks/useDrag';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/solid';
 import KanbanTaskCreateEditModal from '@/components/KanbanTaskCreateEditModal';
+import KanbanTaskDeleteModal from '@/components/KanbanTaskDeleteModal';
+import useKanbanTasksStore from '@/stores/useKanbanTasksStore';
 
 function KanbanCard({ kanbanTask, cardStyle }: { kanbanTask: KanbanTask; cardStyle?: string }) {
   const assignedUser = kanbanTask.assignedUser;
@@ -26,13 +28,25 @@ function KanbanCard({ kanbanTask, cardStyle }: { kanbanTask: KanbanTask; cardSty
   const assignedUserUrl = assignedUser?.photoUrl;
   const assignedAt = kanbanTask.assignedAt;
 
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const lastAddedId = useKanbanTasksStore((state) => state.lastAddedId);
 
   const { ref, isDragging } = useDrag(kanbanTaskItemType, kanbanTask);
 
+  const {
+    isOpen: isCreateEditModalOpen,
+    onOpen: onCreateEditModalOpen,
+    onOpenChange: onCreateEditModalOpenChange,
+  } = useDisclosure();
+
+  const {
+    isOpen: isDeleteModalOpen,
+    onOpen: onDeleteModalOpen,
+    onOpenChange: onDeleteModalOpenChange,
+  } = useDisclosure();
+
   const onAction = (key: Key) => {
-    if (key === 'edit') onOpen();
-    // else if (key === 'delete') onDelete();
+    if (key === 'edit') onCreateEditModalOpen();
+    else if (key === 'delete') onDeleteModalOpen();
   };
 
   return (
@@ -40,10 +54,10 @@ function KanbanCard({ kanbanTask, cardStyle }: { kanbanTask: KanbanTask; cardSty
       id={`${kanbanTaskItemType}_${kanbanTask.id}`}
       ref={ref}
       shadow="sm"
-      className={`shrink-0 w-full py-2 ${cardStyle} ${isDragging ? 'opacity-50 cursor-grabbing' : 'cursor-grab'}`}
+      className={`shrink-0 w-full py-2 ${cardStyle} ${isDragging ? 'opacity-50 cursor-grabbing' : 'cursor-grab'} ${kanbanTask.id === lastAddedId ? 'outline-2 outline-blue-600' : ''}`}
     >
       <CardHeader className="items-start justify-between px-4 py-2 gap-2">
-        <h4 className="grow-1 min-w-0 break-words font-semibold text-medium line-clamp-3">{`#${kanbanTask.id}\u00A0${kanbanTask.title}`}</h4>
+        <h4 className="grow min-w-0 break-words font-semibold text-medium line-clamp-3">{`#${kanbanTask.id}\u00A0${kanbanTask.title}`}</h4>
         <Dropdown
           placement="bottom-end"
           classNames={{
@@ -62,8 +76,19 @@ function KanbanCard({ kanbanTask, cardStyle }: { kanbanTask: KanbanTask; cardSty
             </DropdownItem>
           </DropdownMenu>
         </Dropdown>
-        {isOpen && (
-          <KanbanTaskCreateEditModal kanbanTaskId={kanbanTask.id} isOpen={isOpen} onOpenChange={onOpenChange} />
+        {isCreateEditModalOpen && (
+          <KanbanTaskCreateEditModal
+            kanbanTaskId={kanbanTask.id}
+            isOpen={isCreateEditModalOpen}
+            onOpenChange={onCreateEditModalOpenChange}
+          />
+        )}
+        {isDeleteModalOpen && (
+          <KanbanTaskDeleteModal
+            kanbanTask={kanbanTask}
+            isOpen={isDeleteModalOpen}
+            onOpenChange={onDeleteModalOpenChange}
+          />
         )}
       </CardHeader>
       <CardBody className="px-4 py-2">

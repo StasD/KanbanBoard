@@ -5,12 +5,16 @@ import { type AxiosError } from '@/lib/errors';
 
 const findPos = (kanbanTasks: KanbanTask[] | null, id: number) => kanbanTasks?.findIndex((kt) => kt.id === id) ?? -1;
 
+let lastAddedIdResetTimer: number;
+
 interface KanbanTasksStore {
   kanbanTasks: KanbanTask[] | null;
   isUpdatingTaskLocation: boolean;
   updateTaskLocationError: AxiosError | null;
+  lastAddedId: number | null;
   setKanbanTasks: (kanbanTasks: KanbanTask[] | null) => void;
   addUpdateKanbanTask: (kanbanTask: KanbanTask) => void;
+  removeKanbanTask: (kanbanTaskId: number) => void;
   resetUpdateTaskLocationError: () => void;
   updateTaskLocation: (
     kanbanTaskId: number,
@@ -24,6 +28,7 @@ const useKanbanTasksStore = create<KanbanTasksStore>()((set, get) => ({
   kanbanTasks: null,
   isUpdatingTaskLocation: false,
   updateTaskLocationError: null,
+  lastAddedId: null,
 
   setKanbanTasks: (kanbanTasks) => set({ kanbanTasks }),
 
@@ -38,7 +43,24 @@ const useKanbanTasksStore = create<KanbanTasksStore>()((set, get) => ({
           posKanbanTask >= 0
             ? [...kanbanTasks.slice(0, posKanbanTask), kanbanTask, ...kanbanTasks.slice(posKanbanTask + 1)]
             : [...kanbanTasks, kanbanTask],
+        lastAddedId: kanbanTask.id,
       });
+      clearTimeout(lastAddedIdResetTimer);
+      lastAddedIdResetTimer = setTimeout(() => set({ lastAddedId: null }), 6000);
+    }
+  },
+
+  removeKanbanTask: (kanbanTaskId) => {
+    const state = get();
+    const kanbanTasks = state.kanbanTasks;
+
+    if (kanbanTasks) {
+      const posKanbanTask = findPos(kanbanTasks, kanbanTaskId);
+      if (posKanbanTask >= 0) {
+        set({
+          kanbanTasks: [...kanbanTasks.slice(0, posKanbanTask), ...kanbanTasks.slice(posKanbanTask + 1)],
+        });
+      }
     }
   },
 

@@ -367,7 +367,7 @@ function KanbanTaskCreateEditModal({
                       </div>
                     )}
                     <Button variant="flat" onPress={onClose}>
-                      Close
+                      Cancel
                     </Button>
                     <Button color="primary" type="submit" isDisabled={isDisabled || !isChanged}>
                       {kanbanTaskId !== undefined ? 'Save Task' : 'Create Task'}
