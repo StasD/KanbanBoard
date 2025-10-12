@@ -362,8 +362,8 @@ function KanbanTaskCreateEditModal({
                   <ModalFooter className="items-center">
                     {kanbanTaskToEdit && (
                       <div className="flex flex-col grow gap-1">
-                        <small className="text-default-500 wrap-break-word">{`Created ${utcDateToDateTimeStr(kanbanTaskToEdit.createdAt)}${kanbanTaskToEdit.createdByUser ? ` by ${getFullName(kanbanTaskToEdit.createdByUser)} ` : ''}`}</small>
-                        <small className="text-default-500 wrap-break-word">{`Updated ${utcDateToDateTimeStr(kanbanTaskToEdit.updatedAt)}${kanbanTaskToEdit.updatedByUser ? ` by ${getFullName(kanbanTaskToEdit.updatedByUser)} ` : ''}`}</small>
+                        <small className="text-default-500 wrap-break-word">{`Created on ${utcDateToDateTimeStr(kanbanTaskToEdit.createdAt)}${kanbanTaskToEdit.createdByUser ? ` by ${getFullName(kanbanTaskToEdit.createdByUser)} ` : ''}`}</small>
+                        <small className="text-default-500 wrap-break-word">{`Updated on ${utcDateToDateTimeStr(kanbanTaskToEdit.updatedAt)}${kanbanTaskToEdit.updatedByUser ? ` by ${getFullName(kanbanTaskToEdit.updatedByUser)} ` : ''}`}</small>
                       </div>
                     )}
                     <Button variant="flat" onPress={onClose}>

@@ -7,5 +7,5 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 cd "$SCRIPT_DIR/kanban-board-app"
 
 npm install
-npm upgrade
+# npm upgrade
 npm run build

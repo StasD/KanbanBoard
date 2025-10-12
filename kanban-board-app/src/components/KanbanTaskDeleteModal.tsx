@@ -28,7 +28,7 @@ function KanbanTaskDeleteModal({
 }) {
   const onCloseRef = useRef<(() => void) | null>(null);
 
-  const deleteKanbanTaskFetchFunction = useCallback(() => deleteKanbanTask(kanbanTask.id + 300), [kanbanTask]);
+  const deleteKanbanTaskFetchFunction = useCallback(() => deleteKanbanTask(kanbanTask.id), [kanbanTask]);
 
   const removeKanbanTask = useKanbanTasksStore((state) => state.removeKanbanTask);
 
