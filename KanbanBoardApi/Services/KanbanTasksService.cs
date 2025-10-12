@@ -40,6 +40,12 @@ public class KanbanTasksService(ApplicationDbContext db)
     public IQueryable<KanbanTask> GetKanbanTasksByStatusQuery(KanbanTaskStatus status) =>
         GetAllKanbanTasksQuery().Where(kt => kt.Status == status);
 
+    public Task<IdPriority?> GetFirstKanbanTaskForStatus(KanbanTaskStatus status) =>
+        GetKanbanTasksByStatusQuery(status)
+            .Select(kt => new IdPriority { Id = kt.Id, Priority = kt.Priority })
+            .OrderBy(kt => kt.Priority)
+            .FirstOrDefaultAsync();
+
     public IQueryable<KanbanTask> GetKanbanTasksByAssignedUserIdQuery(int assignedUserId) =>
         GetAllKanbanTasksQuery().Where(kt => kt.AssignedUserId == assignedUserId);
 

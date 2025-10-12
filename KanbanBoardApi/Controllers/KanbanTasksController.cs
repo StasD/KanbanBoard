@@ -69,10 +69,7 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
         try
         {
             // get first task with new task's status
-            var newStatusTopTask = await kanbanTasksService.GetKanbanTasksByStatusQuery(newStatus)
-                .Select(kt => new IdPriority { Id = kt.Id, Priority = kt.Priority })
-                .OrderBy(kt => kt.Priority)
-                .FirstOrDefaultAsync();
+            var newStatusTopTask = await kanbanTasksService.GetFirstKanbanTaskForStatus(newStatus);
 
             // calculate new priority
             double newPriority = GetNewPriority(null, newStatusTopTask);
@@ -110,7 +107,19 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
 
         kanbanTask.Title = kanbanTaskModel.Title!;
         kanbanTask.Description = kanbanTaskModel.Description!;
-        kanbanTask.Status = (KanbanTaskStatus)kanbanTaskModel.Status!;
+
+        var newStatus = (KanbanTaskStatus)kanbanTaskModel.Status!;
+
+        if (newStatus != kanbanTask.Status) {
+            // get first task with task's new status
+            var newStatusTopTask = await kanbanTasksService.GetFirstKanbanTaskForStatus(newStatus);
+
+            // calculate new priority
+            double newPriority = GetNewPriority(null, newStatusTopTask);
+
+            kanbanTask.Status = newStatus;
+            kanbanTask.Priority = newPriority;
+        }
 
         if (kanbanTask.AssignedUserId != kanbanTaskModel.AssignedUserId)
         {
