@@ -13,7 +13,8 @@ This is the project to showcase a full stack web application which uses [ASP.NET
 ## Building and running
 
 1) Use git to clone this repository or download a zip file and unpack it to a folder on your local machine.
-2) Navigate to the folder with the source code in the terminal (on Windows, use Git Bash), and execute ``build_all.sh`` file located at the root of that folder:
+2) Come up with a password for PostgreSQL database user. Then in folders ``data/pg`` and ``KanbanBoardApi``, rename files ``.env.example`` into ``.env`` (or make copies with that name) and replace ``<pg_password>`` with the password you came up with.
+3) Navigate to the folder with the source code in the terminal (on Windows, use Git Bash), and execute ``build_all.sh`` file located at the root of that folder:
 
     ```sh
     ./build_all.sh
