@@ -18,13 +18,22 @@ function useDrag<TItem extends { id: number }>(itemType: string, item: TItem) {
 
         const elRect = el.getBoundingClientRect();
 
-        ghostImageRef.current = el.cloneNode(true) as HTMLDivElement;
+        const clone = el.cloneNode(true) as HTMLDivElement;
+        clone.style.width = `${el.clientWidth}px`;
+        clone.style.height = `${el.clientHeight}px`;
+        clone.style.top = `2px`;
+        clone.style.left = `2px`;
+        clone.style.outline = '2px solid var(--color-blue-600)';
 
-        ghostImageRef.current.style.width = `${el.clientWidth}px`;
-        ghostImageRef.current.style.position = 'absolute';
-        ghostImageRef.current.style.left = '-1000px';
-        ghostImageRef.current.style.top = '-1000px';
+        const container = document.createElement('div');
+        container.style.width = `${el.clientWidth + 4}px`;
+        container.style.height = `${el.clientHeight + 4}px`;
+        container.style.position = 'absolute';
+        container.style.left = '-1000px';
+        container.style.top = '-1000px';
+        container.appendChild(clone);
 
+        ghostImageRef.current = container;
         document.body.appendChild(ghostImageRef.current);
 
         e.dataTransfer.clearData();
