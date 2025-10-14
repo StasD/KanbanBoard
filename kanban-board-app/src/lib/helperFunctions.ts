@@ -17,6 +17,9 @@ const utcDateToDateStr = (dt: Date | null) => (dt ? dateFormatter.format(dt) : n
 
 const utcDateToDateTimeStr = (dt: Date | null) => (dt ? dateTimeFormatter.format(dt) : null);
 
+const findPos = <T extends { id: number }>(items: T[] | null, id: number) =>
+  items?.findIndex((item) => item.id === id) ?? -1;
+
 type TraverseTreeCb = (node: Element) => void;
 
 function traverseTree(node: Element, cb: TraverseTreeCb) {
@@ -29,4 +32,4 @@ function traverseTree(node: Element, cb: TraverseTreeCb) {
   }
 }
 
-export { utcDateToDateStr, utcDateToDateTimeStr, traverseTree };
+export { utcDateToDateStr, utcDateToDateTimeStr, findPos, traverseTree };

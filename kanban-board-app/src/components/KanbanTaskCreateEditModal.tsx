@@ -50,7 +50,7 @@ function KanbanTaskCreateEditModal({
     </ul>
   );
 
-  const onCloseRef = useRef<(() => void) | null>(null);
+  const onCloseRef = useRef<() => void>(null);
 
   const emptyKanbanTask = {
     title: '',
@@ -176,7 +176,7 @@ function KanbanTaskCreateEditModal({
   const isDisabled = isLoading || usersLoadingError !== null || kanbanTaskToEditLoadingError !== null;
   const isChanged = JSON.stringify(kanbanTask) !== JSON.stringify(originalKanbanTask);
 
-  const firstInput = useRef<HTMLInputElement | null>(null);
+  const firstInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     firstInput.current?.focus();

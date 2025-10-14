@@ -2,8 +2,7 @@ import { create } from 'zustand';
 import { type KanbanTaskStatusEnum, type KanbanTask } from '@/models/kanbanTaskModels';
 import { updateKanbanTaskLocation } from '@/api/kanbanTasksApi';
 import { type AxiosError } from '@/lib/errors';
-
-const findPos = (kanbanTasks: KanbanTask[] | null, id: number) => kanbanTasks?.findIndex((kt) => kt.id === id) ?? -1;
+import { findPos } from '@/lib/helperFunctions';
 
 let lastAddedIdResetTimer: number;
 
@@ -86,8 +85,6 @@ const useKanbanTasksStore = create<KanbanTasksStore>()((set, get) => ({
     const taskBefore = posTaskBefore === null ? null : kanbanTasks[posTaskBefore];
 
     if ((taskAfter && taskAfter.status !== newStatus) || (taskBefore && taskBefore.status !== newStatus)) return; // this should not happen
-
-    // console.log(`Id: ${kanbanTaskId}; New Status: ${newStatus}; Id After: ${idAfter}; Id Before: ${idBefore};`); // ; New Priority: ${newPriority}
 
     set({ isUpdatingTaskLocation: true, updateTaskLocationError: null });
 

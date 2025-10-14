@@ -1,16 +1,15 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { useThrottledCallback } from 'use-debounce';
-import useDndStore from '@/stores/useDndStore';
+import { useRef, useEffect, useCallback } from 'react';
+import useDndStore, { type Pos } from '@/stores/useDndStore';
+import { type KanbanTaskStatusEnum, type KanbanTask } from '@/models/kanbanTaskModels';
 
-function useDrop<TItem extends { id: number }>(itemType: string, items: TItem[], itemStatus: number) {
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
-  const ref: React.RefObject<HTMLDivElement | null> = useRef(null);
+function useDrop(itemType: string, items: KanbanTask[], itemStatus: KanbanTaskStatusEnum) {
+  const ref = useRef<HTMLDivElement>(null);
+  const dropTargetId = useRef<number>(0);
 
-  const activeStatusRef = useDndStore((state) => state.activeStatusRef);
-  const currentPositionRef = useDndStore((state) => state.currentPositionRef);
+  const addDropTarget = useDndStore((state) => state.addDropTarget);
+  const removeDropTarget = useDndStore((state) => state.removeDropTarget);
   const setActiveStatus = useDndStore((state) => state.setActiveStatus);
   const setDropPlacement = useDndStore((state) => state.setDropPlacement);
-  const updateItemLocation = useDndStore((state) => state.updateItemLocation);
 
   const calculatePlacement = useCallback(
     (y: number) => {
@@ -23,7 +22,7 @@ function useDrop<TItem extends { id: number }>(itemType: string, items: TItem[],
 
         if (card) {
           const rect = card.getBoundingClientRect();
-          // console.log(`y: ${y}; id: ${id}; bottom: ${rect.bottom} top: ${rect.top}`);
+
           if (y < rect.top + (rect.bottom - rect.top) / 2) {
             idBefore = item.id;
             break;
@@ -38,99 +37,40 @@ function useDrop<TItem extends { id: number }>(itemType: string, items: TItem[],
     [itemType, items],
   );
 
-  const setStatuses = useCallback(
-    (isOver: boolean) => {
-      setIsDraggingOver(isOver);
-      setActiveStatus(isOver ? itemStatus : null);
-      setDropPlacement(isOver && currentPositionRef.current ? calculatePlacement(currentPositionRef.current.y) : null);
-    },
-    [calculatePlacement, currentPositionRef, setActiveStatus, setDropPlacement, itemStatus],
-  );
+  const handleOver = useCallback(
+    (pos: Pos) => {
+      const el = ref.current;
 
-  const throttledSetStatuses = useThrottledCallback(
-    (isOver: boolean) => {
-      if (activeStatusRef.current === itemStatus) setStatuses(isOver);
-    },
-    100,
-    { leading: true },
-  );
+      if (el) {
+        const rect = el.getBoundingClientRect();
 
-  const onDragEnter = useCallback(
-    (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes(itemType)) {
-        e.preventDefault();
-        currentPositionRef.current = { x: e.x, y: e.y };
-        activeStatusRef.current = itemStatus;
-        throttledSetStatuses(true);
-      }
-    },
-    [activeStatusRef, currentPositionRef, itemStatus, itemType, throttledSetStatuses],
-  );
+        const isOver = pos.x >= rect.left && pos.x <= rect.right && pos.y >= rect.top && pos.y <= rect.bottom;
 
-  const onDragLeave = useCallback(
-    (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes(itemType)) {
-        e.preventDefault();
-        currentPositionRef.current = { x: e.x, y: e.y };
-
-        const el = ref.current;
-
-        if (el) {
-          const rect = el.getBoundingClientRect();
-
-          if (!(e.x >= rect.left && e.x <= rect.right && e.y >= rect.top && e.y <= rect.bottom)) {
-            throttledSetStatuses(false);
-          }
+        if (isOver) {
+          setActiveStatus(itemStatus);
+          setDropPlacement(calculatePlacement(pos.y));
         }
-      }
-    },
-    [currentPositionRef, itemType, throttledSetStatuses],
-  );
 
-  const onDragOver = useCallback(
-    (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes(itemType)) {
-        e.preventDefault();
-        currentPositionRef.current = { x: e.x, y: e.y };
-        activeStatusRef.current = itemStatus;
-        throttledSetStatuses(true);
+        return isOver;
       }
-    },
-    [itemType, currentPositionRef, activeStatusRef, itemStatus, throttledSetStatuses],
-  );
 
-  const onDrop = useCallback(
-    (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes(itemType)) {
-        e.preventDefault();
-        updateItemLocation(e.dataTransfer?.getData(itemType) ?? '');
-        activeStatusRef.current = null;
-        setStatuses(false);
-      }
+      return false;
     },
-    [activeStatusRef, itemType, setStatuses, updateItemLocation],
+    [calculatePlacement, itemStatus, setActiveStatus, setDropPlacement],
   );
 
   useEffect(() => {
     const el = ref.current;
 
     if (el) {
-      el.addEventListener('dragenter', onDragEnter);
-      el.addEventListener('dragleave', onDragLeave);
-      el.addEventListener('dragover', onDragOver);
-      el.addEventListener('drop', onDrop);
-
+      dropTargetId.current = addDropTarget({ id: 0, handleOver });
       return () => {
-        el.removeEventListener('dragenter', onDragEnter);
-        el.removeEventListener('dragleave', onDragLeave);
-        el.removeEventListener('dragover', onDragOver);
-        el.removeEventListener('drop', onDrop);
-        setStatuses(false);
+        removeDropTarget(dropTargetId.current);
       };
     }
-  }, [ref, onDragEnter, onDragLeave, onDragOver, onDrop, setStatuses]);
+  }, [addDropTarget, handleOver, removeDropTarget]);
 
-  return { ref, isDraggingOver };
+  return { ref };
 }
 
 export default useDrop;

@@ -1,57 +1,80 @@
 import { createRef } from 'react';
 import { create } from 'zustand';
-import { kanbanTaskItemType, type KanbanTaskStatusEnum, type KanbanTask } from '@/models/kanbanTaskModels';
+import { type KanbanTaskStatusEnum, type KanbanTask } from '@/models/kanbanTaskModels';
 import useKanbanTasksStore from '@/stores/useKanbanTasksStore';
+import { findPos } from '@/lib/helperFunctions';
 
-const ghostImageRef = createRef<HTMLDivElement>();
-const activeStatusRef = createRef<number>();
-const currentPositionRef = createRef<{ x: number; y: number }>();
+interface Pos {
+  x: number;
+  y: number;
+}
 
 interface DropPlacement {
   idAfter: number;
   idBefore: number;
 }
 
-interface DndStore<TItem extends { id: number }> {
-  activeItem: TItem | null;
-  activeStatus: number | null;
-  dropPlacement: DropPlacement | null;
-  ghostImageRef: React.RefObject<HTMLDivElement | null>;
-  activeStatusRef: React.RefObject<number | null>;
-  currentPositionRef: React.RefObject<{ x: number; y: number } | null>;
-  setActiveItem: <T>(item: T | null) => void;
-  setActiveStatus: (itemStatus: number | null) => void;
-  setDropPlacement: (dropPlacement: DropPlacement | null) => void;
-  updateItemLocation: (eventData: string) => void;
+interface DropTarget {
+  id: number;
+  handleOver: (pos: Pos) => boolean;
 }
 
-const useDndStore = create<DndStore<KanbanTask>>()((set, get) => ({
+const dropTargetsRef = createRef<DropTarget[]>();
+const dropTargetIdCounterRef = createRef<number>();
+
+interface DndStore {
+  activeItem: KanbanTask | null;
+  activeStatus: KanbanTaskStatusEnum | null;
+  dropPlacement: DropPlacement | null;
+  dropTargetsRef: React.RefObject<DropTarget[] | null>;
+  setActiveItem: (item: KanbanTask | null) => void;
+  setActiveStatus: (itemStatus: KanbanTaskStatusEnum | null) => void;
+  setDropPlacement: (dropPlacement: DropPlacement | null) => void;
+  addDropTarget: (dropTarget: DropTarget) => number;
+  removeDropTarget: (dropTargetId: number) => void;
+  moveActiveItem: () => void;
+}
+
+const useDndStore = create<DndStore>()((set, get) => ({
   activeItem: null,
   activeStatus: null,
   dropPlacement: null,
-  ghostImageRef: ghostImageRef,
-  activeStatusRef: activeStatusRef,
-  currentPositionRef: currentPositionRef,
-  setActiveItem: (item) => set({ activeItem: item as KanbanTask | null }),
+  dropTargetsRef: dropTargetsRef,
+  setActiveItem: (item) => set({ activeItem: item }),
   setActiveStatus: (itemStatus) => set({ activeStatus: itemStatus }),
   setDropPlacement: (dropPlacement) => set({ dropPlacement }),
-  updateItemLocation: (eventData: string) => {
+  addDropTarget: (dropTarget) => {
     const state = get();
-    if (
-      state.activeItem &&
-      eventData === `${kanbanTaskItemType}_${state.activeItem.id}` &&
-      state.activeStatus !== null &&
-      state.dropPlacement
-    )
+    const dropTargets = state.dropTargetsRef.current;
+    const dropTargetId = (dropTargetIdCounterRef.current ?? 0) + 1;
+    dropTargetIdCounterRef.current = dropTargetId;
+    state.dropTargetsRef.current = [...(dropTargets ?? []), { ...dropTarget, id: dropTargetId }];
+    return dropTargetId;
+  },
+  removeDropTarget: (dropTargetId) => {
+    const state = get();
+    const dropTargets = state.dropTargetsRef.current;
+    if (dropTargets) {
+      const posDropTarget = findPos(dropTargets, dropTargetId);
+      if (posDropTarget >= 0)
+        state.dropTargetsRef.current = [
+          ...dropTargets.slice(0, posDropTarget),
+          ...dropTargets.slice(posDropTarget + 1),
+        ];
+    }
+  },
+  moveActiveItem: () => {
+    const state = get();
+    if (state.activeItem && state.activeStatus !== null && state.dropPlacement)
       useKanbanTasksStore
         .getState()
         .updateTaskLocation(
           state.activeItem.id,
-          state.activeStatus as KanbanTaskStatusEnum,
+          state.activeStatus,
           state.dropPlacement.idAfter,
           state.dropPlacement.idBefore,
         );
   },
 }));
 
-export { useDndStore as default, type DropPlacement };
+export { useDndStore as default, type Pos, type DropPlacement, type DropTarget };

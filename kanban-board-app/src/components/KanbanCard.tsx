@@ -20,6 +20,7 @@ import { EllipsisVerticalIcon } from '@heroicons/react/24/solid';
 import KanbanTaskCreateEditModal from '@/components/KanbanTaskCreateEditModal';
 import KanbanTaskDeleteModal from '@/components/KanbanTaskDeleteModal';
 import useKanbanTasksStore from '@/stores/useKanbanTasksStore';
+import useDndStore from '@/stores/useDndStore';
 
 function KanbanCard({ kanbanTask, cardStyle }: { kanbanTask: KanbanTask; cardStyle?: string }) {
   const assignedUser = kanbanTask.assignedUser;
@@ -29,8 +30,9 @@ function KanbanCard({ kanbanTask, cardStyle }: { kanbanTask: KanbanTask; cardSty
   const assignedAt = kanbanTask.assignedAt;
 
   const lastAddedId = useKanbanTasksStore((state) => state.lastAddedId);
+  const activeItem = useDndStore((state) => state.activeItem);
 
-  const { ref, isDragging } = useDrag(kanbanTaskItemType, kanbanTask);
+  const { ref } = useDrag(kanbanTask);
 
   const {
     isOpen: isCreateEditModalOpen,
@@ -54,7 +56,7 @@ function KanbanCard({ kanbanTask, cardStyle }: { kanbanTask: KanbanTask; cardSty
       id={`${kanbanTaskItemType}_${kanbanTask.id}`}
       ref={ref}
       shadow="sm"
-      className={`shrink-0 w-full py-2 ${cardStyle} ${isDragging ? 'opacity-50 cursor-grabbing' : 'cursor-grab'} ${kanbanTask.id === lastAddedId ? 'outline-2 outline-blue-600' : ''}`}
+      className={`shrink-0 w-full py-2 ${cardStyle} ${activeItem?.id === kanbanTask.id ? 'opacity-50 cursor-grabbing' : 'cursor-grab'} ${kanbanTask.id === lastAddedId ? 'outline-2 outline-blue-600' : ''}`}
     >
       <CardHeader className="items-start justify-between px-4 py-2 gap-2">
         <h4 className="grow min-w-0 break-words font-semibold text-medium line-clamp-3">{`#${kanbanTask.id}\u00A0${kanbanTask.title}`}</h4>

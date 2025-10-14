@@ -26,7 +26,7 @@ function KanbanTaskDeleteModal({
   isOpen: boolean;
   onOpenChange: () => void;
 }) {
-  const onCloseRef = useRef<(() => void) | null>(null);
+  const onCloseRef = useRef<() => void>(null);
 
   const deleteKanbanTaskFetchFunction = useCallback(() => deleteKanbanTask(kanbanTask.id), [kanbanTask]);
 

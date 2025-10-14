@@ -18,7 +18,7 @@ function KanbanColumn({ kanbanTasks, taskStatus }: { kanbanTasks: KanbanTask[]; 
 
   const taskStatusConfig = kanbanTaskStatuses[taskStatus];
 
-  const { ref } = useDrop<KanbanTask>(kanbanTaskItemType, kanbanTasksToDisplay, taskStatus);
+  const { ref } = useDrop(kanbanTaskItemType, kanbanTasksToDisplay, taskStatus);
 
   const activeStatus = useDndStore((state) => state.activeStatus);
   const dropPlacement = useDndStore((state) => state.dropPlacement);
