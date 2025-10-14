@@ -204,6 +204,7 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
             (idBefore > 0 && posTaskBefore == -1) || // TaskBefore is not in the list
             (idAfter == 0 && idBefore > 0 && posTaskBefore != 0) || // TaskBefore is not the first one in the list
             (idBefore == 0 && idAfter > 0 && posTaskAfter != newStatusTasks.Count - 1) || // TaskAfter is not the last one in the list
+            (idAfter == 0 && idBefore == 0 && newStatusTasks.Count > 0) || // idAfter and idBefore both can be 0 only if the list is empty
             (idAfter > 0 && idBefore > 0 && posTaskBefore != posTaskAfter + 1) // TaskBefore does not immediately follow TaskAfter
         )
             return HelperFunctions.Problem(StatusCodes.Status409Conflict, errorTitle, "The state of the database changed. Please refresh the page.") ; // returning 409 error instead of 400, assuming the data has changed since the client saw it, not that they deliberately sent wrong data.

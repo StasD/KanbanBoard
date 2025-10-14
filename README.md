@@ -26,6 +26,6 @@ Notes:
 
 - To add ssl certificate used by the app to your machine's trust chain, navigate to the ``data/ssl`` folder in the terminal, and run ``openssl pkcs12 -export -out server.pfx -inkey server.key -in server.crt``. Then double click the newly created ``server.pfx`` file and follow prompts to add its certificate to your os' keychain. Alternatively, you can just trust the certificate in your browser after being prompted.
 
-- Docker will use ports 80, 443, 5032, 7003, 8180, 8125, 8143 on your localhost. If any of these are already used by other applications running on your machine, please adjust ports in docker-compose.yml.
+- Docker will use ports 443, 5032, 7003, 8180, 8125 on your localhost. If any of these are already used by other applications running on your machine, please adjust ports in docker-compose.yml.
 
 - Authentication is not fully implemented yet.
