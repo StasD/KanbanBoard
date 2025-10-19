@@ -1,7 +1,7 @@
 import axios from 'axios'; // , { HttpStatusCode, type AxiosRequestConfig }
 
 const _axios = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: (import.meta.env.VITE_API_URL as string).replace('<host>', location.hostname),
   allowAbsoluteUrls: false,
   headers: { Authorization: 'Bearer: <some_token>', 'X-Custom-Header': 'foobar' },
 });

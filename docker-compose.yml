@@ -34,9 +34,9 @@ services:
       retries: 20
 
   api:
-    image: mcr.microsoft.com/dotnet/aspnet:9.0.9-bookworm-slim
+    image: mcr.microsoft.com/dotnet/aspnet:9.0.10-bookworm-slim
     ports:
-      - 127.0.0.1:7003:7003
+      - 7003:7003
     restart: no
     working_dir: /app
     entrypoint: ["dotnet", "KanbanBoardApi.dll"]
