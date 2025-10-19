@@ -9,7 +9,8 @@ function useDrag(item: KanbanTask) {
   const pointerId = useRef<number>(null);
   const cursorOffsetRef = useRef<{ x: number; y: number }>(null);
   const isDraggingRef = useRef(false);
-  const ghostImageRef = useRef<HTMLDivElement>(null);
+  const cloneRef = useRef<HTMLDivElement>(null);
+  const onDragEndRef = useRef<(e?: PointerEvent, cancelled?: boolean) => void>(null);
 
   const dropTargetsRef = useDndStore((state) => state.dropTargetsRef);
   const setActiveItem = useDndStore((state) => state.setActiveItem);
@@ -36,11 +37,11 @@ function useDrag(item: KanbanTask) {
       const el = ref.current;
 
       if (el && isDraggingRef.current) {
+        e.preventDefault();
         e.stopPropagation();
-        if (ghostImageRef.current) {
-          ghostImageRef.current.style.transform = `translate(${1000 + e.pageX - (cursorOffsetRef.current?.x ?? 0)}px, ${1000 + e.pageY - (cursorOffsetRef.current?.y ?? 0)}px)`;
-          // ghostImageRef.current.style.left = `${e.pageX - (cursorOffsetRef.current?.x ?? 0)}px`;
-          // ghostImageRef.current.style.top = `${e.pageY - (cursorOffsetRef.current?.y ?? 0)}px`;
+        if (cloneRef.current) {
+          cloneRef.current.style.left = `${e.pageX - (cursorOffsetRef.current?.x ?? 0)}px`;
+          cloneRef.current.style.top = `${e.pageY - (cursorOffsetRef.current?.y ?? 0)}px`;
         }
         pollDropTargets({ x: e.clientX, y: e.clientY });
       }
@@ -48,26 +49,43 @@ function useDrag(item: KanbanTask) {
     [pollDropTargets],
   );
 
-  const onDragEnd = useCallback(() => {
-    if (ghostImageRef.current) {
-      document.body.removeChild(ghostImageRef.current);
-      ghostImageRef.current = null;
-    }
+  const onCancel = useCallback((e: PointerEvent) => {
+    onDragEndRef.current?.(e, true);
+  }, []);
 
-    const el = ref.current;
+  const onTouchStart = useCallback((e: TouchEvent) => {
+    e.preventDefault();
+  }, []);
 
-    if (el && isDraggingRef.current) {
-      moveActiveItem();
-      setActiveItem(null);
-      setActiveStatus(null);
-      setDropPlacement(null);
+  const onDragEnd = useCallback(
+    (e?: PointerEvent, cancelled = false) => {
+      const clone = cloneRef.current;
 
-      isDraggingRef.current = false;
-      el.removeEventListener('pointerup', onDragEnd);
-      el.removeEventListener('pointermove', onDrag);
-      if (pointerId.current) el.releasePointerCapture(pointerId.current);
-    }
-  }, [moveActiveItem, onDrag, setActiveItem, setActiveStatus, setDropPlacement]);
+      if (clone) {
+        if (onDragEndRef.current) clone.removeEventListener('pointerup', onDragEndRef.current);
+        clone.removeEventListener('pointermove', onDrag);
+        clone.removeEventListener('pointercancel', onCancel);
+        if (pointerId.current) clone.releasePointerCapture(pointerId.current);
+
+        document.body.removeChild(clone);
+        cloneRef.current = null;
+      }
+
+      const el = ref.current;
+
+      if (el && isDraggingRef.current) {
+        e?.preventDefault();
+        e?.stopPropagation();
+        if (!cancelled) moveActiveItem();
+        setActiveItem(null);
+        setActiveStatus(null);
+        setDropPlacement(null);
+
+        isDraggingRef.current = false;
+      }
+    },
+    [moveActiveItem, onCancel, onDrag, setActiveItem, setActiveStatus, setDropPlacement],
+  );
 
   const onDragStart = useCallback(
     (e: PointerEvent) => {
@@ -83,45 +101,41 @@ function useDrag(item: KanbanTask) {
       if (el) {
         e.preventDefault();
         e.stopPropagation();
-        pointerId.current = e.pointerId;
-        el.setPointerCapture(pointerId.current);
-        el.addEventListener('pointermove', onDrag);
-        el.addEventListener('pointerup', onDragEnd);
         isDraggingRef.current = true;
 
         const elRect = el.getBoundingClientRect();
+        cursorOffsetRef.current = { x: e.clientX - elRect.x, y: e.clientY - elRect.y };
 
         const clone = el.cloneNode(true) as HTMLDivElement;
         clone.removeAttribute('id');
         clone.style.width = `${el.clientWidth}px`;
         clone.style.height = `${el.clientHeight}px`;
-        clone.style.top = `2px`;
-        clone.style.left = `2px`;
+        clone.style.position = 'absolute';
+        clone.style.left = `${e.pageX - (cursorOffsetRef.current?.x ?? 0)}px`;
+        clone.style.top = `${e.pageY - (cursorOffsetRef.current?.y ?? 0)}px`;
         clone.style.outline = '2px solid var(--color-blue-600)';
+        clone.style.zIndex = '100';
+        clone.style.opacity = '0.9';
         clone.style.cursor = 'grabbing';
 
-        const container = document.createElement('div');
-        container.style.width = `${el.clientWidth + 4}px`;
-        container.style.height = `${el.clientHeight + 4}px`;
-        container.style.position = 'absolute';
-        container.style.left = '-1000px';
-        container.style.top = '-1000px';
-        container.style.zIndex = '100';
-        container.style.opacity = '0.85';
-        container.appendChild(clone);
+        cloneRef.current = clone;
+        document.body.appendChild(clone);
 
-        ghostImageRef.current = container;
-        document.body.appendChild(container);
-
-        cursorOffsetRef.current = { x: e.clientX - elRect.x, y: e.clientY - elRect.y };
+        pointerId.current = e.pointerId;
+        clone.setPointerCapture(pointerId.current);
+        clone.addEventListener('pointermove', onDrag);
+        clone.addEventListener('pointerup', onDragEnd);
+        clone.addEventListener('pointercancel', onCancel);
 
         setActiveItem(item);
       }
     },
-    [item, onDrag, onDragEnd, setActiveItem],
+    [item, onCancel, onDrag, onDragEnd, setActiveItem],
   );
 
   useEffect(() => {
+    onDragEndRef.current = onDragEnd;
+
     const el = ref.current;
 
     if (el) {
@@ -130,13 +144,16 @@ function useDrag(item: KanbanTask) {
       });
 
       el.addEventListener('pointerdown', onDragStart);
+      el.addEventListener('touchstart', onTouchStart);
 
       return () => {
         onDragEnd();
+        onDragEndRef.current = null;
         el.removeEventListener('pointerdown', onDragStart);
+        el.removeEventListener('touchstart', onTouchStart);
       };
     }
-  }, [onDragEnd, onDragStart]);
+  }, [onDragEnd, onDragStart, onTouchStart]);
 
   return { ref };
 }

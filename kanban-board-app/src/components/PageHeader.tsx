@@ -28,7 +28,7 @@ const AcmeLogo = () => {
 
 const navbarItems = getNavbarItems();
 
-function PageHeader() {
+function PageHeader({ mainEl }: { mainEl: React.RefObject<HTMLElement> }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const currentLocation = useLocation();
 
@@ -44,6 +44,7 @@ function PageHeader() {
       onMenuOpenChange={setIsMenuOpen}
       maxWidth="full"
       classNames={{ wrapper: 'max-w-7xl' }}
+      parentRef={mainEl}
     >
       <NavbarContent>
         <NavbarMenuToggle aria-label={isMenuOpen ? 'Close menu' : 'Open menu'} className="sm:hidden" />

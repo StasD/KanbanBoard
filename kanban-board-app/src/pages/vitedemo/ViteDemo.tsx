@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTheme } from '@heroui/use-theme';
 import { Button, Select, SelectItem } from '@heroui/react';
+import useFixedLayout from '@/hooks/useFixedLayout';
 import useBreadcrumbPath from '@/hooks/useBreadcrumbPath';
 import reactLogo from '@/assets/react.svg';
 import viteLogo from '/vite.svg';
@@ -13,6 +14,7 @@ const themes = [
 ];
 
 function ViteDemo({ breadcrumbPath = '' }) {
+  useFixedLayout(false);
   useBreadcrumbPath(breadcrumbPath);
   const { theme, setTheme } = useTheme();
   const [count, setCount] = useState(0);
@@ -23,7 +25,7 @@ function ViteDemo({ breadcrumbPath = '' }) {
   }
 
   return (
-    <div id="page" className="flex flex-col items-center justify-center grow w-full p-2">
+    <div id="page" className="flex flex-col items-center justify-center grow w-full px-2 py-6">
       <div className="flex flex-row">
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className={styles.logo} alt="Vite logo" />
@@ -42,7 +44,7 @@ function ViteDemo({ breadcrumbPath = '' }) {
         </p>
       </div>
       <p className="my-4 text-foreground-500">Click on the Vite and React logos to learn more</p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 my-4">
         <span>The current theme is:</span>
         <div className="inline w-48 max-w-xs">
           <Select

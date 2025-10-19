@@ -10,7 +10,7 @@ function App() {
   const navigate = useNavigate();
 
   return (
-    <HeroUIProvider navigate={navigate} useHref={useHref}>
+    <HeroUIProvider navigate={navigate} useHref={useHref} className="h-full overflow-hidden">
       <ToastProvider
         placement="top-center"
         toastProps={{

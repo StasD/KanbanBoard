@@ -1,6 +1,8 @@
+import useFixedLayout from '@/hooks/useFixedLayout';
 import useBreadcrumbPath from '@/hooks/useBreadcrumbPath';
 
 function HomePage({ breadcrumbPath = '' }) {
+  useFixedLayout(false);
   useBreadcrumbPath(breadcrumbPath);
 
   return (
