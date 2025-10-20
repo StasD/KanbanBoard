@@ -56,9 +56,9 @@ function KanbanCard({ kanbanTask, cardStyle }: { kanbanTask: KanbanTask; cardSty
       id={`${kanbanTaskItemType}_${kanbanTask.id}`}
       ref={ref}
       shadow="sm"
-      className={`touch-pan-y shrink-0 w-full py-2 ${cardStyle} ${activeItem?.id === kanbanTask.id ? 'opacity-50 cursor-grabbing' : 'cursor-grab'} ${kanbanTask.id === lastAddedId ? 'outline-2 outline-blue-600' : ''}`}
+      className={`shrink-0 w-full py-2 ${cardStyle} ${activeItem?.id === kanbanTask.id ? 'opacity-50 cursor-grabbing' : 'cursor-grab'} ${kanbanTask.id === lastAddedId ? 'outline-2 outline-blue-600' : ''} touch-pan-y select-none`}
     >
-      <CardHeader className="items-start justify-between px-4 py-2 gap-2">
+      <CardHeader className="items-start justify-between px-4 py-2 gap-2 touch-none select-none">
         <h4 className="grow min-w-0 break-words font-semibold text-medium line-clamp-3">{`#${kanbanTask.id}\u00A0${kanbanTask.title}`}</h4>
         <Dropdown
           placement="bottom-end"
@@ -93,10 +93,10 @@ function KanbanCard({ kanbanTask, cardStyle }: { kanbanTask: KanbanTask; cardSty
           />
         )}
       </CardHeader>
-      <CardBody className="px-4 py-2">
+      <CardBody className="px-4 py-2 touch-pan-y select-none">
         <p className="text-medium line-clamp-7">{kanbanTask.description}</p>
       </CardBody>
-      <CardFooter className="text-small items-center justify-between px-4 py-2 gap-2">
+      <CardFooter className="text-small items-center justify-between px-4 py-2 gap-2 touch-pan-y select-none">
         <div>
           <p>{assignedTo}</p>
           {assignedAt && (

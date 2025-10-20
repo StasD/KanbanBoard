@@ -53,10 +53,6 @@ function useDrag(item: KanbanTask) {
     onDragEndRef.current?.(e, true);
   }, []);
 
-  const onTouchStart = useCallback((e: TouchEvent) => {
-    e.preventDefault();
-  }, []);
-
   const onDragEnd = useCallback(
     (e?: PointerEvent, cancelled = false) => {
       const clone = cloneRef.current;
@@ -65,7 +61,11 @@ function useDrag(item: KanbanTask) {
         if (onDragEndRef.current) clone.removeEventListener('pointerup', onDragEndRef.current);
         clone.removeEventListener('pointermove', onDrag);
         clone.removeEventListener('pointercancel', onCancel);
-        if (pointerId.current) clone.releasePointerCapture(pointerId.current);
+
+        if (pointerId.current) {
+          clone.releasePointerCapture(pointerId.current);
+          pointerId.current = null;
+        }
 
         document.body.removeChild(clone);
         cloneRef.current = null;
@@ -76,6 +76,8 @@ function useDrag(item: KanbanTask) {
       if (el && isDraggingRef.current) {
         e?.preventDefault();
         e?.stopPropagation();
+        pollDropTargets.cancel();
+
         if (!cancelled) moveActiveItem();
         setActiveItem(null);
         setActiveStatus(null);
@@ -84,13 +86,14 @@ function useDrag(item: KanbanTask) {
         isDraggingRef.current = false;
       }
     },
-    [moveActiveItem, onCancel, onDrag, setActiveItem, setActiveStatus, setDropPlacement],
+    [moveActiveItem, onCancel, onDrag, pollDropTargets, setActiveItem, setActiveStatus, setDropPlacement],
   );
 
   const onDragStart = useCallback(
     (e: PointerEvent) => {
       if (
         isDraggingRef.current ||
+        !e.isPrimary ||
         e.button != 0 ||
         ['button', 'input', 'select', 'option', 'textarea'].some((s) => (e.target as HTMLElement).closest(s) !== null)
       )
@@ -140,20 +143,22 @@ function useDrag(item: KanbanTask) {
 
     if (el) {
       traverseTree(el, (node) => {
-        if (node.tagName.toLowerCase() === 'img') node.setAttribute('draggable', 'false');
+        if (node.tagName.toLowerCase() === 'img') {
+          node.setAttribute('draggable', 'false');
+          (node as HTMLElement).style.touchAction = 'none';
+          (node as HTMLElement).style.setProperty('-webkit-touch-callout', 'none');
+        }
       });
 
       el.addEventListener('pointerdown', onDragStart);
-      el.addEventListener('touchstart', onTouchStart);
 
       return () => {
         onDragEnd();
         onDragEndRef.current = null;
         el.removeEventListener('pointerdown', onDragStart);
-        el.removeEventListener('touchstart', onTouchStart);
       };
     }
-  }, [onDragEnd, onDragStart, onTouchStart]);
+  }, [onDragStart, onDragEnd]);
 
   return { ref };
 }
