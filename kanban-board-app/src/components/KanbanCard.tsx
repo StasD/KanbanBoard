@@ -56,7 +56,7 @@ function KanbanCard({ kanbanTask, cardStyle }: { kanbanTask: KanbanTask; cardSty
       id={`${kanbanTaskItemType}_${kanbanTask.id}`}
       ref={ref}
       shadow="sm"
-      className={`shrink-0 w-full py-2 ${cardStyle} ${activeItem?.id === kanbanTask.id ? 'opacity-50 cursor-grabbing' : 'cursor-grab'} ${kanbanTask.id === lastAddedId ? 'outline-2 outline-blue-600' : ''}`}
+      className={`touch-pan-y shrink-0 w-full py-2 ${cardStyle} ${activeItem?.id === kanbanTask.id ? 'opacity-50 cursor-grabbing' : 'cursor-grab'} ${kanbanTask.id === lastAddedId ? 'outline-2 outline-blue-600' : ''}`}
     >
       <CardHeader className="items-start justify-between px-4 py-2 gap-2">
         <h4 className="grow min-w-0 break-words font-semibold text-medium line-clamp-3">{`#${kanbanTask.id}\u00A0${kanbanTask.title}`}</h4>
