@@ -29,3 +29,13 @@ Notes:
 - Docker will use ports 443, 5032, 7003, 8180, 8125 on your localhost. If any of these are already used by other applications running on your machine, please adjust ports in docker-compose.yml.
 
 - Authentication is not fully implemented yet.
+
+## Screenshots
+
+![Screenshot 1](https://drive.google.com/uc?export=view&id=1zN_i0tRZS9mzn41M-6p6ScL1VrtzqSFw "Screenshot 1")
+
+![Screenshot 2](https://drive.google.com/uc?export=view&id=1INeGMFK8JZNW7j4M-zxmPsk8t4I4tGim "Screenshot 2")
+
+##
+
+Copyright © 2025 Stan D.

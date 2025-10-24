@@ -59,7 +59,7 @@ function KanbanCard({ kanbanTask, cardStyle }: { kanbanTask: KanbanTask; cardSty
       className={`shrink-0 w-full py-2 ${cardStyle} ${activeItem?.id === kanbanTask.id ? 'opacity-50 cursor-grabbing' : 'cursor-grab'} ${kanbanTask.id === lastAddedId ? 'outline-2 outline-blue-600' : ''} touch-pan-y select-none`}
     >
       <CardHeader className="items-start justify-between px-4 py-2 gap-2 touch-none select-none">
-        <h4 className="grow min-w-0 break-words font-semibold text-medium line-clamp-3">{`#${kanbanTask.id}\u00A0${kanbanTask.title}`}</h4>
+        <h4 className="grow min-w-0 wrap-break-word font-semibold text-medium line-clamp-3">{`#${kanbanTask.id}\u00A0${kanbanTask.title}`}</h4>
         <Dropdown
           placement="bottom-end"
           classNames={{
