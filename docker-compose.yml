@@ -1,7 +1,7 @@
 services:
 
   db:
-    image: postgres:17.6-bookworm
+    image: postgres:17.7-bookworm
     ports:
       - 127.0.0.1:5032:5432
     restart: no
@@ -34,7 +34,7 @@ services:
       retries: 20
 
   api:
-    image: mcr.microsoft.com/dotnet/aspnet:9.0.10-bookworm-slim
+    image: mcr.microsoft.com/dotnet/aspnet:9.0.11-bookworm-slim
     ports:
       - 7003:7003
     restart: no

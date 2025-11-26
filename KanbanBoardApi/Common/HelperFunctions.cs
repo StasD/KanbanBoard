@@ -16,6 +16,6 @@ public static class HelperFunctions
     public static ProblemHttpResult Problem(int statusCode, string title, string detail) =>
         TypedResults.Problem(detail, null, statusCode, title);
 
-    public static ValidationProblem ValidationProblem(IEnumerable<KeyValuePair<string, string[]>> errors, string title, string detail) =>
+    public static ValidationProblem ValidationProblem(IDictionary<string, string[]> errors, string title, string detail) =>
         TypedResults.ValidationProblem(errors, detail, null, title);
 }
