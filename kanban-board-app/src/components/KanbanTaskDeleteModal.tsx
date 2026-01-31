@@ -89,12 +89,12 @@ function KanbanTaskDeleteModal({
                     <p>Are you sure you want to delete this task?</p>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-start gap-2">
-                        <div className="shrink-0 w-[80px]">Task Id:</div>
+                        <div className="shrink-0 w-20">Task Id:</div>
                         <div className="grow font-semibold">{kanbanTask.id}</div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <div className="shrink-0 w-[80px]">Title:</div>
-                        <div className="grow min-w-0 break-words font-semibold">{kanbanTask.title}</div>
+                        <div className="shrink-0 w-20">Title:</div>
+                        <div className="grow min-w-0 wrap-break-word font-semibold">{kanbanTask.title}</div>
                       </div>
                     </div>
                   </ModalBody>

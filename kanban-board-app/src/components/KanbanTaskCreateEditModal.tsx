@@ -251,10 +251,8 @@ function KanbanTaskCreateEditModal({
                         <Select
                           name="status"
                           classNames={{
-                            base: 'grow min-w-3xs',
+                            base: 'grow min-w-3xs !mt-[0]',
                             trigger: 'h-12',
-                            label:
-                              'group-data-[has-helper=true]:-translate-y-[calc(100%_+_var(--heroui-font-size-small)/2_+_20px)] group-data-[invalid=true]:-translate-y-[calc(100%_+_var(--heroui-font-size-small)/2_+_30px)]',
                           }}
                           label="Status"
                           labelPlacement="outside"
@@ -306,10 +304,8 @@ function KanbanTaskCreateEditModal({
                         <Select
                           name="assignedUserId"
                           classNames={{
-                            base: 'grow min-w-xs',
+                            base: 'grow min-w-xs !mt-[0]',
                             trigger: 'h-12',
-                            label:
-                              'group-data-[has-helper=true]:-translate-y-[calc(100%_+_var(--heroui-font-size-small)/2_+_20px)] group-data-[invalid=true]:-translate-y-[calc(100%_+_var(--heroui-font-size-small)/2_+_30px)]',
                           }}
                           label="Assigned to"
                           labelPlacement="outside"
