@@ -1,12 +1,12 @@
 # Kanban Board Demo
 
-This is the project to showcase a full stack web application which uses [ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/overview?view=aspnetcore-9.0) with [EF Core](https://learn.microsoft.com/en-us/ef/core/) for Web API backend, [React](https://react.dev), [React Router](https://reactrouter.com), [HeroUI](https://www.heroui.com) component library, [Tailwind CSS](https://tailwindcss.com) and [Zustand](https://github.com/pmndrs/zustand) for client app, [nginx](https://nginx.org) as the web server and reverse proxy, and [PostgreSQL](https://www.postgresql.org) as the database.
+This is the project to showcase a full stack web application which uses [ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/overview?view=aspnetcore-10.0) with [EF Core](https://learn.microsoft.com/en-us/ef/core/) for Web API backend, [React](https://react.dev), [React Router](https://reactrouter.com), [HeroUI](https://www.heroui.com) component library, [Tailwind CSS](https://tailwindcss.com) and [Zustand](https://github.com/pmndrs/zustand) for client app, [nginx](https://nginx.org) as the web server and reverse proxy, and [PostgreSQL](https://www.postgresql.org) as the database.
 
 ## Prerequisites
 
 - [Git](https://git-scm.com)
 - [Docker](https://www.docker.com/products/docker-desktop/)
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet)
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet)
 - [Node.js](https://nodejs.org/en/download) (v24 was used during development)
 - [VS Code](https://code.visualstudio.com) with ESLint and C# Dev Kit extensions (for development)
 
