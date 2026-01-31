@@ -1,14 +1,17 @@
 ﻿using KanbanBoardApi.Entities;
+using KanbanBoardApi.Entities.Account;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace KanbanBoardApi.Data;
 
-public partial class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser, ApplicationRole, int, ApplicationUserClaim, ApplicationUserRole, ApplicationUserLogin, ApplicationRoleClaim, ApplicationUserToken>(options), IDataProtectionKeyContext
+public partial class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityUserContext<ApplicationUser, int, ApplicationUserClaim, ApplicationUserLogin, ApplicationUserToken>(options), IDataProtectionKeyContext
 {
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
     public DbSet<KanbanTask> KanbanTasks { get; set; }
+    public DbSet<UserAgent> UserAgents { get; set; }
+    public DbSet<UserSession> UserSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,11 +37,6 @@ public partial class ApplicationDbContext(DbContextOptions<ApplicationDbContext>
             b.HasIndex(u => u.NormalizedUserName).HasDatabaseName("ix_users_normalized_user_name").IsUnique();
             b.HasIndex(u => u.NormalizedEmail).HasDatabaseName("ix_users_normalized_email").IsUnique();
 
-            b.HasMany(u => u.Roles)
-                .WithOne(ur => ur.User)
-                .HasForeignKey(ur => ur.UserId)
-                .IsRequired();
-
             b.HasMany(u => u.Tokens)
                 .WithOne(ut => ut.User)
                 .HasForeignKey(ut => ut.UserId)
@@ -55,31 +53,9 @@ public partial class ApplicationDbContext(DbContextOptions<ApplicationDbContext>
                 .IsRequired();
         });
 
-        modelBuilder.Entity<ApplicationRole>(b =>
-        {
-            b.ToTable("roles");
-
-            b.Property(r => r.Name).IsRequired().HasDefaultValue("");
-            b.Property(r => r.NormalizedName).IsRequired().HasDefaultValue("");
-
-            b.HasIndex(r => r.NormalizedName).HasDatabaseName("ix_roles_normalized_name").IsUnique();
-
-            b.HasMany(r => r.Users)
-                .WithOne(ur => ur.Role)
-                .HasForeignKey(ur => ur.RoleId)
-                .IsRequired();
-
-            b.HasMany(r => r.Claims)
-                .WithOne(rc => rc.Role)
-                .HasForeignKey(rc => rc.RoleId)
-                .IsRequired();
-        });
-
-        modelBuilder.Entity<ApplicationUserRole>().ToTable("user_roles");
         modelBuilder.Entity<ApplicationUserToken>().ToTable("user_tokens");
         modelBuilder.Entity<ApplicationUserLogin>().ToTable("user_logins");
         modelBuilder.Entity<ApplicationUserClaim>().ToTable("user_claims");
-        modelBuilder.Entity<ApplicationRoleClaim>().ToTable("role_claims");
 
         modelBuilder.Entity<KanbanTask>(b =>
         {
@@ -101,6 +77,32 @@ public partial class ApplicationDbContext(DbContextOptions<ApplicationDbContext>
 
             b.Property(kt => kt.CreatedAt).HasConversion(v => v, v => new DateTime(v.Ticks, DateTimeKind.Utc));
             b.Property(kt => kt.UpdatedAt).HasConversion(v => v, v => new DateTime(v.Ticks, DateTimeKind.Utc));
+        });
+
+        modelBuilder.Entity<UserAgent>(b =>
+        {
+            b.Property(ua => ua.CreatedAt).HasConversion(v => v, v => new DateTime(v.Ticks, DateTimeKind.Utc));
+        });
+
+        modelBuilder.Entity<UserSession>(b =>
+        {
+            b.HasOne(us => us.User)
+                .WithMany(u => u.UserSessions)
+                .HasForeignKey(us => us.UserId);
+
+            b.HasOne(us => us.UserAgent)
+                .WithMany(ua => ua.UserSessions)
+                .HasForeignKey(us => us.UserAgentId);
+
+            b.Property(us => us.LoginDate).HasConversion(v => v, v => new DateTime(v.Ticks, DateTimeKind.Utc));
+
+            b.Property(us => us.SessionExpiryDate).HasConversion(
+                v => v,
+                v => new DateTime(((DateTime)v!).Ticks, DateTimeKind.Utc)); // null values bypass convertions
+
+            b.Property(us => us.RefreshTokenIssueDate).HasConversion(
+                v => v,
+                v => new DateTime(((DateTime)v!).Ticks, DateTimeKind.Utc)); // null values bypass convertions
         });
     }
 }

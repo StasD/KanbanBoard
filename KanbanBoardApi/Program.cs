@@ -1,15 +1,17 @@
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Encodings.Web;
+using KanbanBoardApi.Common;
 using KanbanBoardApi.Data;
 using KanbanBoardApi.Models.Common;
 using KanbanBoardApi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
-
-// using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,21 +34,39 @@ builder.Services.AddDataProtection()
     .PersistKeysToDbContext<ApplicationDbContext>()
     .ProtectKeysWithCertificate(certificate);
 
-// builder.Services.AddAuthentication(options =>
-// {
-//     options.DefaultAuthenticateScheme = IdentityConstants.BearerScheme;
-//     options.DefaultChallengeScheme = IdentityConstants.BearerScheme;
-// })
-// .AddBearerToken();
-
-builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
+builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = true;
         options.SignIn.RequireConfirmedEmail = true;
         options.User.RequireUniqueEmail = true;
     })
-    .AddRoles<ApplicationRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders()
+    .AddSignInManager();
+
+var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings")!;
+var jwtSettings = jwtSettingsSection.Get<JwtSettings>()!;
+
+builder.Services.Configure<JwtSettings>(jwtSettingsSection);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            // the key used to sign the token
+            IssuerSigningKey = new SymmetricSecurityKey(HelperFunctions.GetUtf8Bytes(jwtSettings.Key)),
+            ClockSkew = TimeSpan.Zero // this removes the 5-minute grace period
+        };
+
+        options.EventsType = typeof(CustomJwtBearerEvents);
+    });
 
 var requireAuthPolicy = new AuthorizationPolicyBuilder()
     .RequireAuthenticatedUser()
@@ -54,8 +74,7 @@ var requireAuthPolicy = new AuthorizationPolicyBuilder()
 
 builder.Services.AddAuthorizationBuilder()
     .SetDefaultPolicy(requireAuthPolicy)
-    .SetFallbackPolicy(requireAuthPolicy)
-    .AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
+    .SetFallbackPolicy(requireAuthPolicy);
 
 builder.Services.Configure<EmailSenderOptions>(builder.Configuration.GetSection("EmailSender"));
 builder.Services.AddTransient<IEmailSender, EmailSender>();
@@ -63,6 +82,8 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 // Add custom services
 builder.Services.AddScoped<KanbanTasksService>();
 builder.Services.AddScoped<UsersService>();
+builder.Services.AddScoped<UserAgentService>();
+builder.Services.AddScoped<CustomJwtBearerEvents>();
 
 // Set the JSON serializer options
 builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
@@ -79,14 +100,15 @@ builder.Services.AddControllers(options =>
 builder.Services.AddOpenApi();
 
 // Configure CORS policies
-builder.Services.Configure<CorsSettings>(builder.Configuration.GetSection("CorsSettings"));
+var corsSettingsSection = builder.Configuration.GetSection("CorsSettings")!;
+var corsSettings = corsSettingsSection.Get<CorsSettings>()!;
+
+builder.Services.Configure<CorsSettings>(corsSettingsSection);
 
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policyBuilder =>
     {
-        var corsSettings = builder.Configuration.GetSection("CorsSettings").Get<CorsSettings>()!;
-
         policyBuilder
             .WithOrigins(corsSettings.AllowedOrigins.Split(","))
             .WithHeaders(corsSettings.ClientHeaders.Split(","))
@@ -114,9 +136,9 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGroup("/api/account")
-    .AllowAnonymous()
-    .MapIdentityApi<ApplicationUser>(); // click 'Go to Definition' to view the code for the endpoints it creates
+// app.MapGroup("/api/account")
+//     .AllowAnonymous()
+//     .MapIdentityApi<ApplicationUser>(); // click 'Go to Definition' to view the code for the endpoints it creates
 
 app.MapControllers();
 

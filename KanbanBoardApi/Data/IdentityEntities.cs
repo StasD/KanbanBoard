@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using KanbanBoardApi.Entities;
+using KanbanBoardApi.Entities.Account;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,7 +22,6 @@ public class ApplicationUser : IdentityUser<int>
 
     public bool IsDisabled { get; set; }
 
-    public ICollection<ApplicationUserRole> Roles { get; } = [];
     public ICollection<ApplicationUserToken> Tokens { get; } = [];
     public ICollection<ApplicationUserLogin> Logins { get; } = [];
     public ICollection<ApplicationUserClaim> Claims { get; } = [];
@@ -29,21 +29,8 @@ public class ApplicationUser : IdentityUser<int>
     public ICollection<KanbanTask> AssignedToTasks { get; } = [];
     public ICollection<KanbanTask> CreatedByTasks { get; } = [];
     public ICollection<KanbanTask> UpdatedByTasks { get; } = [];
-}
 
-public class ApplicationRole : IdentityRole<int>
-{
-    public ICollection<ApplicationUserRole> Users { get; } = [];
-    public ICollection<ApplicationRoleClaim> Claims { get; } = [];
-}
-
-public class ApplicationUserRole : IdentityUserRole<int>
-{
-    [DeleteBehavior(DeleteBehavior.NoAction)]
-    public ApplicationUser? User { get; set; }
-
-    [DeleteBehavior(DeleteBehavior.NoAction)]
-    public ApplicationRole? Role { get; set; }
+    public ICollection<UserSession> UserSessions { get; } = [];
 }
 
 public class ApplicationUserToken : IdentityUserToken<int>
@@ -62,10 +49,4 @@ public class ApplicationUserClaim : IdentityUserClaim<int>
 {
     [DeleteBehavior(DeleteBehavior.NoAction)]
     public ApplicationUser? User { get; set; }
-}
-
-public class ApplicationRoleClaim : IdentityRoleClaim<int>
-{
-    [DeleteBehavior(DeleteBehavior.NoAction)]
-    public ApplicationRole? Role { get; set; }
 }

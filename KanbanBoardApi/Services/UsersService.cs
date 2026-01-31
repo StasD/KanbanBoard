@@ -3,6 +3,7 @@ using KanbanBoardApi.Data;
 using KanbanBoardApi.Models.Users;
 using LinqKit;
 using Microsoft.EntityFrameworkCore;
+using KanbanBoardApi.Entities.Account;
 
 namespace KanbanBoardApi.Services;
 
@@ -26,4 +27,10 @@ public class UsersService(ApplicationDbContext db)
 
     public Task<UserModel?> GetUserById(int id) =>
         GetUserByIdQuery(id).Select(UserMapping).FirstOrDefaultAsync();
+
+    public IQueryable<UserSession> GetAllSessionsQuery() =>
+        db.UserSessions.AsExpandable();
+
+    public IQueryable<UserSession> GetUserSessionByIdQuery(int id) =>
+        GetAllSessionsQuery().Where(us => us.Id == id);
 }

@@ -3,7 +3,7 @@ using KanbanBoardApi.Services;
 
 namespace KanbanBoardApi.ModelValidations;
 
-public class IsValidUserIdAttribute() : ValidationAttribute
+public class IsValidUserIdAttribute : ValidationAttribute
 {
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {

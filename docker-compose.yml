@@ -28,15 +28,38 @@ services:
     mem_limit: 2048m
     shm_size: 128mb
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U robot -d kanban_board"]
+      test: ["CMD", "pg_isready", "-U", "robot", "-d", "kanban_board"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:4.2.3-management
+    hostname: rabbitmq-1
+    ports:
+      - 127.0.0.1:5671:5671
+      - 127.0.0.1:15671:15671
+    restart: no
+    volumes:
+      - ./data/ssl:/etc/rabbitmq/ssl:ro
+      - ./data/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./data/rabbitmq/data/rabbitmq:/var/lib/rabbitmq
+    env_file:
+      - ./data/rabbitmq/.env
+    networks:
+      default:
+        aliases:
+          - rabbitmq.kanbanboard.net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 5s
       timeout: 5s
       retries: 20
 
   api:
-    image: mcr.microsoft.com/dotnet/aspnet:10.0.1-noble-chiseled
+    image: mcr.microsoft.com/dotnet/aspnet:10.0.2-noble-chiseled
     ports:
-      - 7003:7003
+      - 127.0.0.1:7003:7003
     restart: no
     working_dir: /app
     entrypoint: ["dotnet", "KanbanBoardApi.dll"]
@@ -52,6 +75,8 @@ services:
     mem_limit: 1024m
     shm_size: 128mb
     depends_on:
+      rabbitmq:
+        condition: service_healthy
       db:
         condition: service_healthy
 
