@@ -1,6 +1,7 @@
 using KanbanBoardApi.Common;
 using KanbanBoardApi.Data;
 using KanbanBoardApi.Entities;
+using KanbanBoardApi.Messages.KanbanTaskChanged;
 using KanbanBoardApi.Models.KanbanTasks;
 using KanbanBoardApi.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -8,6 +9,11 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Npgsql;
+using Rebus.Bus;
+using Rebus.Config.Outbox;
+using Rebus.Transport;
 
 namespace KanbanBoardApi.Controllers;
 
@@ -15,7 +21,7 @@ namespace KanbanBoardApi.Controllers;
 // [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class KanbanTasksController(UserManager<ApplicationUser> userManager, ApplicationDbContext db, KanbanTasksService kanbanTasksService) : ControllerBase
+public class KanbanTasksController(UserManager<ApplicationUser> userManager, ApplicationDbContext db, KanbanTasksService kanbanTasksService, IBus bus) : ControllerBase
 {
     private static double GetNewPriority(IdPriority? taskAfter, IdPriority? taskBefore) =>
         taskBefore == null
@@ -64,10 +70,15 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
             UpdatedAt = now,
         };
 
+        KanbanTaskModel? newKanbanTaskModel;
+
         using var tran = await db.Database.BeginTransactionAsync();
 
         try
         {
+            using var scope = new RebusTransactionScope();
+            scope.UseOutbox((NpgsqlConnection)db.Database.GetDbConnection(), (NpgsqlTransaction)tran.GetDbTransaction());
+
             // get first task with new task's status
             var newStatusTopTask = await kanbanTasksService.GetFirstKanbanTaskForStatus(newStatus);
 
@@ -77,6 +88,12 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
             newKanbanTask.Priority = newPriority;
             await db.AddAsync(newKanbanTask);
             await db.SaveChangesAsync();
+
+            newKanbanTaskModel = await kanbanTasksService.GetKanbanTaskById(newKanbanTask.Id);
+
+            await bus.Publish(new KanbanTaskChangedMessage { Id = newKanbanTask.Id, ChangeType = KanbanTaskChangeTypeEnum.KanbanTaskCreated, NewKanbanTask = newKanbanTaskModel, OldKanbanTask = null });
+
+            await scope.CompleteAsync();
             await tran.CommitAsync();
         }
         catch (Exception)
@@ -86,7 +103,7 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
         }
 
         // newKanbanTask should now have Id field set to the Id of the newly created record
-        return TypedResults.Created($"/api/KanbanTasks/{newKanbanTask.Id}", await kanbanTasksService.GetKanbanTaskById(newKanbanTask.Id));
+        return TypedResults.Created($"/api/KanbanTasks/{newKanbanTask.Id}", newKanbanTaskModel);
     }
 
     [HttpPut("{id}")]
@@ -130,9 +147,26 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
         kanbanTask.UpdatedByUserId = loggedInUserId;
         kanbanTask.UpdatedAt = now;
 
+        KanbanTaskModel? oldKanbanTaskModel;
+        KanbanTaskModel? newKanbanTaskModel;
+
+        using var tran = await db.Database.BeginTransactionAsync();
+
         try
         {
+            using var scope = new RebusTransactionScope();
+            scope.UseOutbox((NpgsqlConnection)db.Database.GetDbConnection(), (NpgsqlTransaction)tran.GetDbTransaction());
+
+            oldKanbanTaskModel = await kanbanTasksService.GetKanbanTaskById(id);
+
             await db.SaveChangesAsync();
+
+            newKanbanTaskModel = await kanbanTasksService.GetKanbanTaskById(id);
+
+            await bus.Publish(new KanbanTaskChangedMessage { Id = id, ChangeType = KanbanTaskChangeTypeEnum.KanbanTaskModified, NewKanbanTask = newKanbanTaskModel, OldKanbanTask = oldKanbanTaskModel });
+
+            await scope.CompleteAsync();
+            await tran.CommitAsync();
         }
         catch (Exception)
         {
@@ -156,9 +190,23 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
         if (kanbanTask == null)
             return HelperFunctions.NotFound("Error Deleting Task", $"Task with Id {id} does not exist.");
 
+        KanbanTaskModel? oldKanbanTaskModel;
+
+        using var tran = await db.Database.BeginTransactionAsync();
+
         try
         {
+            using var scope = new RebusTransactionScope();
+            scope.UseOutbox((NpgsqlConnection)db.Database.GetDbConnection(), (NpgsqlTransaction)tran.GetDbTransaction());
+
+            oldKanbanTaskModel = await kanbanTasksService.GetKanbanTaskById(id);
+
             await db.KanbanTasks.Where(kt => kt.Id == id).ExecuteDeleteAsync();
+
+            await bus.Publish(new KanbanTaskChangedMessage { Id = id, ChangeType = KanbanTaskChangeTypeEnum.KanbanTaskDeleted, NewKanbanTask = null, OldKanbanTask = oldKanbanTaskModel });
+
+            await scope.CompleteAsync();
+            await tran.CommitAsync();
         }
         catch (Exception)
         {
@@ -222,9 +270,26 @@ public class KanbanTasksController(UserManager<ApplicationUser> userManager, App
         kanbanTask.UpdatedByUserId = loggedInUserId;
         kanbanTask.UpdatedAt = now;
 
+        KanbanTaskModel? oldKanbanTaskModel;
+        KanbanTaskModel? newKanbanTaskModel;
+
+        using var tran = await db.Database.BeginTransactionAsync();
+
         try
         {
+            using var scope = new RebusTransactionScope();
+            scope.UseOutbox((NpgsqlConnection)db.Database.GetDbConnection(), (NpgsqlTransaction)tran.GetDbTransaction());
+
+            oldKanbanTaskModel = await kanbanTasksService.GetKanbanTaskById(id);
+
             await db.SaveChangesAsync();
+
+            newKanbanTaskModel = await kanbanTasksService.GetKanbanTaskById(id);
+
+            await bus.Publish(new KanbanTaskChangedMessage { Id = id, ChangeType = KanbanTaskChangeTypeEnum.KanbanTaskModified, NewKanbanTask = newKanbanTaskModel, OldKanbanTask = oldKanbanTaskModel });
+
+            await scope.CompleteAsync();
+            await tran.CommitAsync();
         }
         catch (Exception)
         {

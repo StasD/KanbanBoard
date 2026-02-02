@@ -6,8 +6,10 @@ namespace KanbanBoardApi.Entities;
 
 public enum KanbanTaskStatus
 {
-    None = 0,
+    Backlog = 0,
+    [Display(Name = "To Do")]
     ToDo,
+    [Display(Name = "In Progress")]
     InProgress,
     Done
 }

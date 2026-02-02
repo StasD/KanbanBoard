@@ -2,6 +2,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.Encodings.Web;
 using KanbanBoardApi.Common;
 using KanbanBoardApi.Data;
+using KanbanBoardApi.Messages.KanbanTaskChanged;
 using KanbanBoardApi.Models.Common;
 using KanbanBoardApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,15 +13,17 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Rebus.Config;
+using Rebus.Config.Outbox;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("Postgres") ?? throw new InvalidOperationException("Connection string 'Postgres' not found.");
+var postgresConnString = builder.Configuration.GetConnectionString("Postgres") ?? throw new InvalidOperationException("Connection string 'Postgres' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options
-        .UseNpgsql(connectionString)
+        .UseNpgsql(postgresConnString)
         .UseSnakeCaseNamingConvention()
 #if DEBUG
         .EnableSensitiveDataLogging()
@@ -29,6 +32,30 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 var certPaths = builder.Configuration.GetSection("Kestrel:Endpoints:Https:Certificate").Get<CertificatePaths>()!;
 var certificate = X509Certificate2.CreateFromPemFile(certPaths.Path, certPaths.KeyPath);
+
+var rabbitMqConnString = builder.Configuration.GetConnectionString("RabbitMQ") ?? throw new InvalidOperationException("Connection string 'RabbitMQ' not found.");
+
+var rabbitMqUri = new Uri(rabbitMqConnString);
+
+builder.Services.AddRebus((configure, provider) => configure
+    .Transport(t =>
+        t.UseRabbitMq(rabbitMqConnString, "kanbanboard-app-queue")
+            // .CustomizeConnectionFactory(conn => {
+            //     var cnn = (ConnectionFactory)conn;
+            //     cnn.Uri = rabbitMqUri;
+            //     cnn.Ssl.Certs = [certificate];
+            //     return cnn;
+            // })
+        )
+    .Outbox(o => o.StoreInPostgreSql(postgresConnString, "outbox")),
+    //.Routing(c => c.TypeBased().Map<KanbanTaskChangedMessage>("kanbanboard-app-queue"))
+    onCreated: async bus =>
+    {
+        await bus.Subscribe<KanbanTaskChangedMessage>();
+    }
+);
+
+builder.Services.AutoRegisterHandlersFromAssemblyOf<Program>();
 
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<ApplicationDbContext>()
