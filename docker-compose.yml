@@ -29,9 +29,11 @@ services:
     shm_size: 128mb
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "robot", "-d", "kanban_board"]
-      interval: 5s
-      timeout: 2s
-      retries: 20
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      start_interval: 5s
 
   rabbitmq:
     image: rabbitmq:4.2.3-management
@@ -52,9 +54,11 @@ services:
           - rabbitmq.kanbanboard.net
     healthcheck:
       test: rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms
-      interval: 5s
-      timeout: 2s
-      retries: 20
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      start_interval: 5s
 
   api:
     image: mcr.microsoft.com/dotnet/aspnet:10.0.2-noble
@@ -65,7 +69,7 @@ services:
     entrypoint: >
       bash -c "chown app /ssl/server.key
       && exec su -c 'chmod 600 /ssl/server.key
-      && dotnet KanbanBoardApi.dll' app"
+      && sleep 10 && dotnet KanbanBoardApi.dll' app"
     volumes:
       - ./KanbanBoardApi/publish:/app:ro
       - ./data/api/ssl:/ssl
