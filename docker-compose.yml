@@ -57,15 +57,18 @@ services:
       retries: 20
 
   api:
-    image: mcr.microsoft.com/dotnet/aspnet:10.0.2-noble-chiseled
+    image: mcr.microsoft.com/dotnet/aspnet:10.0.2-noble
     ports:
       - 127.0.0.1:7003:7003
     restart: no
     working_dir: /app
-    entrypoint: ["dotnet", "KanbanBoardApi.dll"]
+    entrypoint: >
+      bash -c "chown app /ssl/server.key
+      && exec su -c 'chmod 600 /ssl/server.key
+      && dotnet KanbanBoardApi.dll' app"
     volumes:
       - ./KanbanBoardApi/publish:/app:ro
-      - ./data/ssl:/ssl:ro
+      - ./data/ssl:/ssl
     env_file:
       - ./KanbanBoardApi/.env
     networks:
