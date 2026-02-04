@@ -30,7 +30,7 @@ services:
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "robot", "-d", "kanban_board"]
       interval: 5s
-      timeout: 5s
+      timeout: 2s
       retries: 20
 
   rabbitmq:
@@ -51,9 +51,9 @@ services:
         aliases:
           - rabbitmq.kanbanboard.net
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms
       interval: 5s
-      timeout: 5s
+      timeout: 2s
       retries: 20
 
   api:
