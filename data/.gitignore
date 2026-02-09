@@ -1,0 +1,9 @@
+# directories
+data/
+logs/
+DataProtectionKeys/
+
+# files
+.env
+*.pfx
+*.pem

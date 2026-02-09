@@ -1,7 +1,7 @@
 services:
 
   db:
-    image: postgres:18.1-trixie
+    image: postgres:18-trixie
     ports:
       - 127.0.0.1:5032:5432
     restart: no
@@ -15,6 +15,7 @@ services:
       && exec su -c 'chmod 600 /etc/postgresql/ssl/server.key
       && /usr/local/bin/docker-entrypoint.sh postgres
       -c ssl=on
+      -c ssl_ca_file=/etc/postgresql/ssl/ca.crt
       -c ssl_cert_file=/etc/postgresql/ssl/server.crt
       -c ssl_key_file=/etc/postgresql/ssl/server.key
       -c hba_file=/etc/postgresql/pg_hba.conf
@@ -36,7 +37,7 @@ services:
       start_interval: 5s
 
   rabbitmq:
-    image: rabbitmq:4.2.3-management
+    image: rabbitmq:4.2-management
     hostname: rabbitmq-1
     ports:
       - 127.0.0.1:5671:5671
@@ -61,14 +62,14 @@ services:
       start_interval: 5s
 
   api:
-    image: mcr.microsoft.com/dotnet/aspnet:10.0.2-noble
+    image: mcr.microsoft.com/dotnet/aspnet:10.0-noble
     ports:
       - 127.0.0.1:7003:7003
     restart: no
     working_dir: /app
     entrypoint: >
-      bash -c "chown app /ssl/server.key
-      && exec su -c 'chmod 600 /ssl/server.key
+      bash -c "chown app /ssl/server.key && chown app /ssl/client.key
+      && exec su -c 'chmod 600 /ssl/server.key && chmod 600 /ssl/client.key
       && sleep 10 && dotnet KanbanBoardApi.dll' app"
     volumes:
       - ./KanbanBoardApi/publish:/app:ro
@@ -88,7 +89,7 @@ services:
         condition: service_healthy
 
   app:
-    image: nginx:1.29.5-trixie
+    image: nginx:1.29-trixie
     ports:
       - 443:443
     restart: no
@@ -107,7 +108,7 @@ services:
         condition: service_started
 
   mail:
-    image: rnwood/smtp4dev:3.12.0
+    image: rnwood/smtp4dev:3.14.0
     ports:
       - 127.0.0.1:8180:80
       - 127.0.0.1:8125:25

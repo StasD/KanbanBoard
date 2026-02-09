@@ -26,7 +26,7 @@ This is the project to showcase a full stack web application which uses [ASP.NET
 
 Notes:
 
-- To add ssl certificate used by the app to your machine's trust chain, navigate to the ``data/api/ssl`` folder in the terminal, and run ``openssl pkcs12 -export -out server.pfx -inkey server.key -in server.crt``. Then double click the newly created ``server.pfx`` file and follow prompts to add its certificate to your os' keychain. Alternatively, you can just trust the certificate in your browser after being prompted.
+- To add ssl certificates used by the app to your machine's trust chain, navigate to the ``data/ssl`` folder in the terminal, and run ``openssl pkcs12 -export -out ca.pfx -inkey ca.key -in ca.crt``. Then double click the newly created ``ca.pfx`` file and follow prompts to add its certificate to your os' keychain. On Windows, add the certificate to the Trusted Root Certification Authorities store. On macOS, open Keychain Access app and mark the imported certificate as trusted there. Alternatively, you can just trust the certificate in your browser after being prompted.
 
 - Docker will use ports 443, 5032, 5671, 7003, 8180, 8125, 15671 on your localhost. If any of these are already used by other applications running on your machine, please adjust ports in docker-compose.yml.
 

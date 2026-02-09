@@ -14,10 +14,8 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using RabbitMQ.Client;
 using Rebus.Config;
 using Rebus.Config.Outbox;
-using Rebus.RabbitMq;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,6 +34,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 var serverCertPaths = builder.Configuration.GetSection("Kestrel:Endpoints:Https:Certificate").Get<CertificatePaths>()!;
 var serverCert = X509Certificate2.CreateFromPemFile(serverCertPaths.Path, serverCertPaths.KeyPath);
 
+var clientCertPaths = builder.Configuration.GetSection("ClientCertificate").Get<CertificatePaths>()!;
+var clientCert = X509Certificate2.CreateFromPemFile(clientCertPaths.Path, clientCertPaths.KeyPath);
+
+var caCertPaths = builder.Configuration.GetSection("CaCertificate").Get<CertificatePaths>()!;
+var caCert = X509CertificateLoader.LoadCertificateFromFile(caCertPaths.Path);
+
 var rabbitMqConnString = builder.Configuration.GetConnectionString("RabbitMQ") ?? throw new InvalidOperationException("Connection string 'RabbitMQ' not found.");
 
 var rabbitMqUri = new Uri(rabbitMqConnString);
@@ -44,17 +48,23 @@ builder.Services.AddRebus((configure, provider) => configure
     .Transport(t =>
         t.UseRabbitMq(rabbitMqConnString, "kanbanboard-app-queue")
             .CustomizeConnectionFactory(conn => {
-                var cnn = (ConnectionFactory)conn;
-                cnn.Uri = rabbitMqUri;
-                cnn.Ssl.CertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors)
-                    => sslPolicyErrors == SslPolicyErrors.None || certificate?.GetCertHashString() == serverCert.Thumbprint;
-                //cnn.Ssl.Certs = [clientCert];
+                var cnn = new RabbitMQConnectionFactory
+                {
+                    Uri = rabbitMqUri
+                };
+                cnn.Ssl.CertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+                    sslPolicyErrors switch
+                    {
+                        SslPolicyErrors.None => true,
+                        SslPolicyErrors.RemoteCertificateChainErrors => certificate.IsSignedByCaCert(caCert),
+                        _ => false,
+                    };
+                cnn.Ssl.Certs = [clientCert];
                 return cnn;
-            }) // this doesn't work (customized ConnectionFactory is not used), temporary fix below
-            .Ssl(new SslSettings(true, rabbitMqUri.Host, acceptablePolicyErrors: SslPolicyErrors.RemoteCertificateChainErrors | SslPolicyErrors.RemoteCertificateNameMismatch))
+            })
         )
     .Outbox(o => o.StoreInPostgreSql(postgresConnString, "outbox")),
-    //.Routing(c => c.TypeBased().Map<KanbanTaskChangedMessage>("kanbanboard-app-queue"))
+    // .Routing(c => c.TypeBased().Map<KanbanTaskChangedMessage>("kanbanboard-app-queue"))
     onCreated: async bus =>
     {
         await bus.Subscribe<KanbanTaskChangedMessage>();
